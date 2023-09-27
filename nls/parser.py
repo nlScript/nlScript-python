@@ -235,7 +235,15 @@ class Parser:
     def typ(self) -> Rule:
         g = self._grammar
         typ = g.sequence(None, [self.IDENTIFIER.withName("identifier")])
-        typ.setEvaluator(Evaluator(lambda pn: self._targetGrammar.getSymbol(pn.getParsedString())))
+
+        def evaluate(pn: ParsedNode):
+            string: str = pn.getParsedString()
+            symbol: Symbol = self._targetGrammar.getSymbol(string)
+            if symbol is None:
+                raise Exception("Unknow type '" + string + "'")
+            return symbol
+
+        typ.setEvaluator(Evaluator(evaluate))
         return g.orrule(
             "type",
             [
