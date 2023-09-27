@@ -203,21 +203,19 @@ class EBNFCore:
         return list(map(lambda x: x.name, named))
 
     def addRule(self, rule: Rule) -> None:
-        if self._compiled:
-            raise Exception("Grammar is already compiled")
         if rule.tgt.symbol not in self._symbols:
             self._symbols[rule.tgt.symbol] = rule.tgt
         for s in rule.children:
             if not s.isEpsilon() and s.symbol not in self._symbols:
                 self._symbols[s.symbol] = s
         self._rules.append(rule)
+        self._compiled = False
 
     def removeRules(self, symbol: NonTerminal):
-        if self._compiled:
-            raise Exception("Grammar is already compiled")
         for i in range(len(self._rules) - 1, -1, -1):
             if self._rules[i].tgt == symbol:
                 del(self._rules[i])
+        self._compiled = True
 
     def newOrExistingNonTerminal(self, typ: str) -> NonTerminal or None:
         if typ is None:
