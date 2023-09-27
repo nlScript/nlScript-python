@@ -10,8 +10,6 @@ from nls.core.nonterminal import NonTerminal
 from nls.core.terminal import Terminal
 from nls.core.autocompletion import Autocompletion
 
-from nls.core import graphviz
-
 import sys
 
 sys.setrecursionlimit(500)
@@ -33,7 +31,10 @@ class RDParser:
 
     def parse(self, autocompletions: List[Autocompletion] = None) -> DefaultParsedNode:
         seq = SymbolSequence(BNF.ARTIFICIAL_START_SYMBOL)
-        parsedSequence = self.parseRecursive(seq, autocompletions)
+        endOfInput: List[SymbolSequence] = []
+        parsedSequence = self.parseRecursive(seq, autocompletions, endOfInput)
+        if autocompletions is not None:
+            self.collectAutocompletions(endOfInput, autocompletions)
         if autocompletions is not None and len(autocompletions) > 0 and autocompletions[-1] is None:
             del(autocompletions[-1])
         last = [None]
@@ -50,6 +51,10 @@ class RDParser:
             pn.production.buildAST(pn, children)
 
         return pn
+
+    def collectAutocompletions(self, endOfInput: List[SymbolSequence], autocompletions: List[Autocompletion]) -> None:
+        for seq in endOfInput:
+            self.addAutocompletions(seq, autocompletions)
 
     def addAutocompletions(self, symbolSequence: SymbolSequence, autocompletions: List[Autocompletion or None]):
         if len(autocompletions) > 0 and autocompletions[-1] is None:
@@ -88,7 +93,7 @@ class RDParser:
                 if ac not in autocompletions:
                     autocompletions.append(ac)
 
-    def parseRecursive(self, symbolSequence: SymbolSequence, autocompletions: List[Autocompletion]) -> SymbolSequence:
+    def parseRecursive(self, symbolSequence: SymbolSequence, autocompletions: List[Autocompletion], endOfInput: List[SymbolSequence]) -> SymbolSequence:
         # print("parseRecursive:")
         # print("  symbol sequence = " + str(symbolSequence))
         # print("  lexer           = " + str(self._lexer))
@@ -101,8 +106,8 @@ class RDParser:
             matcher = cast(Terminal, nextS).matches(self._lexer)
             # print("matcher = " + str(matcher))
             symbolSequence.addMatcher(matcher)
-            if matcher.state == ParsingState.END_OF_INPUT and autocompletions is not None:
-                self.addAutocompletions(symbolSequence, autocompletions)
+            if matcher.state == ParsingState.END_OF_INPUT and endOfInput is not None:
+                endOfInput.append(symbolSequence)
 
             if matcher.state != ParsingState.SUCCESSFUL:
                 return symbolSequence
@@ -120,7 +125,7 @@ class RDParser:
         for alternate in alternatives:
             lexerPos = self._lexer.pos
             nextSequence = symbolSequence.replaceCurrentSymbol(alternate)
-            parsedSequence = self.parseRecursive(nextSequence, autocompletions)
+            parsedSequence = self.parseRecursive(nextSequence, autocompletions, endOfInput)
             m = parsedSequence.getLastMatcher()
             if m is not None:
                 if m.state == ParsingState.SUCCESSFUL:
