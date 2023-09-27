@@ -100,7 +100,7 @@ class Parser:
         self._targetGrammar.compile(symbol)
         self._compiled = True
 
-    def parse(self, text: str, autocompletions: List[Autocompletion] or None) -> ParsedNode:
+    def parse(self, text: str, autocompletions: List[Autocompletion] or None = None) -> ParsedNode:
         if not self._compiled:
             self.compile()
         self._symbol2Autocompletion.clear()
