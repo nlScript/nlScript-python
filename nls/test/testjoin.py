@@ -11,6 +11,7 @@ from nls.ebnf import ebnfparsednodefactory
 from nls.ebnf.ebnfcore import EBNFCore
 from nls.core import graphviz
 from nls.parsednode import ParsedNode
+from nls.parseexception import ParseException
 from nls.util.range import Range, PLUS, STAR, OPTIONAL
 
 
@@ -30,8 +31,6 @@ def testKeepDelimiters():
     lexer = Lexer(input)
     test = RDParser(grammar.getBNF(), lexer, ebnfparsednodefactory.INSTANCE)
     root = test.parse()
-    print(graphviz.toVizDotLink(root))
-    root = test.buildAst(root)
     print(graphviz.toVizDotLink(root))
 
     assertEquals(ParsingState.SUCCESSFUL, root.matcher.state)
@@ -77,8 +76,6 @@ def testSuccess(grammar: BNF, input: str, result: List[str]):
     parser = RDParser(grammar, lexer, ebnfparsednodefactory.INSTANCE)
     root = parser.parse()
     print(graphviz.toVizDotLink(root))
-    root = parser.buildAst(root)
-    print(graphviz.toVizDotLink(root))
 
     assertEquals(ParsingState.SUCCESSFUL, root.matcher.state)
 
@@ -103,9 +100,11 @@ def testSuccess(grammar: BNF, input: str, result: List[str]):
 def testFailure(grammar: BNF, input: str):
     lexer = Lexer(input)
     parser = RDParser(grammar, lexer, ebnfparsednodefactory.INSTANCE)
-    root = parser.parse()
-    print(graphviz.toVizDotLink(root))
-    assertNotEquals(ParsingState.SUCCESSFUL, root.matcher.state)
+    try:
+        root = parser.parse()
+        assertNotEquals(ParsingState.SUCCESSFUL, root.matcher.state)
+    except ParseException:
+        pass
 
 
 def test():

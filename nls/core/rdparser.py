@@ -12,6 +12,8 @@ from nls.core.autocompletion import Autocompletion
 
 import sys
 
+from nls.parseexception import ParseException
+
 sys.setrecursionlimit(500)
 
 if TYPE_CHECKING:
@@ -29,16 +31,28 @@ class RDParser:
         self._lexer = lexer
         self._parsedNodeFactory = parsedNodeFactory
 
+    def getLexer(self) -> Lexer:
+        return self._lexer
+
+    def getGrammar(self) -> BNF:
+        return self._grammar
+
+    def getParsedNodeFactory(self) -> ParsedNodeFactory:
+        return self._parsedNodeFactory
+
     def parse(self, autocompletions: List[Autocompletion] = None) -> DefaultParsedNode:
         seq = SymbolSequence(BNF.ARTIFICIAL_START_SYMBOL)
         endOfInput: List[SymbolSequence] = []
-        parsedSequence = self.parseRecursive(seq, autocompletions, endOfInput)
+        parsedSequence = self.parseRecursive(seq, endOfInput)
         if autocompletions is not None:
             self.collectAutocompletions(endOfInput, autocompletions)
         if autocompletions is not None and len(autocompletions) > 0 and autocompletions[-1] is None:
             del(autocompletions[-1])
-        last = [None]
+        last: List[DefaultParsedNode or None] = [None]
         ret = self.createParsedTree(parsedSequence, last)
+        ret = self.buildAst(ret)
+        if ret.matcher.state == ParsingState.FAILED:
+            raise ParseException(ret, last[0], self)
         return ret
 
     def buildAst(self, pn: DefaultParsedNode) -> DefaultParsedNode:
@@ -93,7 +107,7 @@ class RDParser:
                 if ac not in autocompletions:
                     autocompletions.append(ac)
 
-    def parseRecursive(self, symbolSequence: SymbolSequence, autocompletions: List[Autocompletion], endOfInput: List[SymbolSequence]) -> SymbolSequence:
+    def parseRecursive(self, symbolSequence: SymbolSequence, endOfInput: List[SymbolSequence]) -> SymbolSequence:
         # print("parseRecursive:")
         # print("  symbol sequence = " + str(symbolSequence))
         # print("  lexer           = " + str(self._lexer))
@@ -125,7 +139,7 @@ class RDParser:
         for alternate in alternatives:
             lexerPos = self._lexer.pos
             nextSequence = symbolSequence.replaceCurrentSymbol(alternate)
-            parsedSequence = self.parseRecursive(nextSequence, autocompletions, endOfInput)
+            parsedSequence = self.parseRecursive(nextSequence, endOfInput)
             m = parsedSequence.getLastMatcher()
             if m is not None:
                 if m.state == ParsingState.SUCCESSFUL:

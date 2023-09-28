@@ -5,25 +5,104 @@ from typing import cast, List
 
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import Qt, QStringListModel, QRect, QObject, QEvent, QModelIndex
-from PyQt5.QtGui import QTextCursor, QKeyEvent, QColor, QPalette
-from PyQt5.QtWidgets import QCompleter, QPlainTextEdit, QApplication, QTextEdit, QItemDelegate, QStyleOptionViewItem
+from PyQt5.QtGui import QTextCursor, QKeyEvent, QColor, QPalette, QTextCharFormat, QFont
+from PyQt5.QtWidgets import QCompleter, QPlainTextEdit, QApplication, QTextEdit, QItemDelegate, QStyleOptionViewItem, \
+    QWidget, QSplitter, QHBoxLayout, QPushButton, QVBoxLayout
 
 from nls.autocompleter import IfNothingYetEnteredAutocompleter, Autocompleter
 from nls.core.autocompletion import Autocompletion
+from nls.core.matcher import Matcher
 from nls.ebnf.ebnfparser import ParseStartListener
 from nls.ebnf.parselistener import ParseListener
 from nls.evaluator import Evaluator
 from nls.parsednode import ParsedNode
+from nls.parseexception import ParseException
 from nls.parser import Parser
 from nls.ui.codeeditor import CodeEditor
+
+
+class ACEditor(QWidget):
+    def __init__(self, parser: Parser, parent=None):
+        super(ACEditor, self).__init__(parent)
+
+        self._parser = parser
+
+        vbox = QVBoxLayout(self)
+
+        splitter = QSplitter(Qt.Vertical)
+
+        self._textEdit = AwesomeTextEdit(parser, parent=splitter)
+        self._outputArea = QPlainTextEdit(parent=splitter)
+        font = QtGui.QFont()
+        font.setFamily("Courier")
+        font.setPointSize(10)
+        font.setBold(True)
+        self._outputArea.setFont(font)
+        self._outputArea.setReadOnly(True)
+
+        splitter.addWidget(self._textEdit)
+        splitter.addWidget(self._outputArea)
+        splitter.setSizes([480, 120])
+
+        vbox.addWidget(splitter)
+
+        run = QPushButton("Run", self)
+        run.clicked.connect(self.run)
+        vbox.addWidget(run, alignment=Qt.AlignCenter)
+
+        self.setLayout(vbox)
+        self.resize(800, 600)
+
+    def getText(self) -> str:
+        return self._textEdit.document().toPlainText()
+
+    def run(self) -> None:
+        try:
+            self._outputArea.setPlainText("")
+            print("Parsing...")
+            pn: ParsedNode = self._parser.parse(self.getText())
+            print("Evaluating...")
+            pn.evaluate()
+            print("Done")
+        except ParseException as e:
+            self._outputArea.setPlainText(e.getError())
+            pass
+
+
+class ErrorHighlight:
+    def __init__(self, tc: CodeEditor):
+        self._tc = tc;
+        self.highlight: QTextEdit.ExtraSelection | None = None
+
+    def setError(self, i0: int, i1: int) -> None:
+        self.clearError()
+        self.highlight = QTextEdit.ExtraSelection()
+
+        cursor = self._tc.textCursor()
+        cursor.setPosition(i0)
+        cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor, i1 - i0)
+        self.highlight.format.setForeground(QColor(255, 100, 100))
+        self.highlight.format.setFontWeight(QFont.Bold)
+        self.highlight.cursor = cursor
+
+        self._tc.addExtrasSelection(self.highlight)
+        self._tc.updateExtraSelections()
+
+    def clearError(self) -> None:
+        if self.highlight is not None:
+            self._tc.removeExtraSelection(self.highlight)
 
 
 class AwesomeTextEdit(CodeEditor):
     def __init__(self, parser:Parser, parent=None):
         super(AwesomeTextEdit, self).__init__(parent)
+
+        self._errorHighlight = ErrorHighlight(tc=self)
+
         font = QtGui.QFont()
         font.setFamily("Courier")
         font.setPointSize(10)
+        font.setBold(True)
         self.setFont(font)
         self.setBaseSize(800, 600)
 
@@ -140,7 +219,14 @@ class AwesomeTextEdit(CodeEditor):
 
         textToCursor = self.toPlainText()[0:anchor]
         autocompletions: List[Autocompletion] = []
-        self.parser.parse(textToCursor, autocompletions)
+
+        self._errorHighlight.clearError()
+        try:
+            self.parser.parse(textToCursor, autocompletions)
+        except ParseException as e:
+            f: Matcher = e.getFirstAutocompletingAncestorThatFailed().matcher
+            self._errorHighlight.setError(f.pos, f.pos + len(f.parsed))
+            return
 
         if len(autocompletions) == 1 and autoinsertSingleOption:
             self.completer.setCompletions(autocompletions)
@@ -228,7 +314,7 @@ class MyCompleter(QCompleter):
 class ParameterizedCompletionContext(QObject):
     parameterChanged = QtCore.pyqtSignal(int, bool)
 
-    def __init__(self, tc: QPlainTextEdit):
+    def __init__(self, tc: CodeEditor):
         super().__init__(parent=tc)
         self._tc = tc
         self._parameters: List[Param] = []
@@ -249,9 +335,8 @@ class ParameterizedCompletionContext(QObject):
         cursor.movePosition(QTextCursor.NextCharacter, QTextCursor.KeepAnchor, i1 - i0 + 1)
         selection.cursor = cursor
 
-        selections = self._tc.extraSelections()
-        selections.append(selection)
-        self._tc.setExtraSelections(selections)
+        self._tc.addExtrasSelection(selection)
+        self._tc.updateExtraSelections()
 
         param = Param(name, selection)
         return param
@@ -277,8 +362,10 @@ class ParameterizedCompletionContext(QObject):
         cursor.removeSelectedText()
         offset = cursor.position()
         cursor.insertText(insertionString)
+        for p in self._parameters:
+            self._tc.removeExtraSelection(p.highlight)
+        self._tc.updateExtraSelections()
         self._parameters.clear()
-        self._tc.setExtraSelections([])
         for pp in parsedParams:
             self._parameters.append(self.addHighlight(pp.name, offset + pp.i0, offset + pp.i1))
         atEnd = offset + len(insertionString)
@@ -324,7 +411,9 @@ class ParameterizedCompletionContext(QObject):
 
     def cancel(self) -> None:
         print("cancel")
-        self._tc.setExtraSelections([])
+        for p in self._parameters:
+            self._tc.removeExtraSelection(p.highlight)
+        self._tc.updateExtraSelections()
         self._parameters.clear()
         self.parameterChanged.disconnect()
 
@@ -597,6 +686,6 @@ if __name__ == "__main__":
     parser.compile()
 
     app = QApplication([])
-    te = AwesomeTextEdit(parser)
+    te = ACEditor(parser)
     te.show()
     exit(app.exec_())

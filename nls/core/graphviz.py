@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import urllib.parse
 
+from nls.core.named import Named
 from nls.core.parsingstate import ParsingState
 
 if TYPE_CHECKING:
@@ -42,6 +43,8 @@ def vizDotNodes(root: DefaultParsedNode) -> str:
     parsed = root.getParsedString()
     parsed = parsed.replace("\n", "\\n")
     name = root.name
+    if name == Named.UNNAMED:
+        name = root.symbol.symbol
     name = name.replace("\n", "\\n")
     sb = '  ' + \
         str(hash(root)) + \

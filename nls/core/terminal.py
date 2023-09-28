@@ -71,7 +71,7 @@ class Digit(Terminal):
         c = lexer.peek()
         if c.isdigit():
             return Matcher(ParsingState.SUCCESSFUL, pos, c)
-        return Matcher(ParsingState.FAILED, pos, "")
+        return Matcher(ParsingState.FAILED, pos, c)
 
 
 class Literal(Terminal):
@@ -106,7 +106,7 @@ class Letter(Terminal):
         c = lexer.peek()
         if c.isalpha():
             return Matcher(ParsingState.SUCCESSFUL, pos, c)
-        return Matcher(ParsingState.FAILED, pos, "")
+        return Matcher(ParsingState.FAILED, pos, c)
 
 
 class Whitespace(Terminal):
@@ -121,7 +121,7 @@ class Whitespace(Terminal):
         c = lexer.peek()
         if c == ' ' or c == '\t':
             return Matcher(ParsingState.SUCCESSFUL, pos, c)
-        return Matcher(ParsingState.FAILED, pos, "")
+        return Matcher(ParsingState.FAILED, pos, c)
 
 
 class CharacterClass(Terminal):
@@ -173,7 +173,7 @@ class CharacterClass(Terminal):
         c = lexer.peek()
         if self._ranges.checkCharacter(ord(c)):
             return Matcher(ParsingState.SUCCESSFUL, pos, c)
-        return Matcher(ParsingState.FAILED, pos, "")
+        return Matcher(ParsingState.FAILED, pos, c)
 
 
 class CharacterRange:

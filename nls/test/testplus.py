@@ -11,6 +11,7 @@ from nls.ebnf import ebnfparsednodefactory
 from nls.ebnf.ebnfcore import EBNFCore
 from nls.core import graphviz
 from nls.parsednode import ParsedNode
+from nls.parseexception import ParseException
 
 
 def assertEquals(exp, real):
@@ -40,8 +41,6 @@ def testSuccess(input: str):
     parser = RDParser(grammar, lexer, ebnfparsednodefactory.INSTANCE)
     root = parser.parse()
     print(graphviz.toVizDotLink(root))
-    root = parser.buildAst(root)
-    print(graphviz.toVizDotLink(root))
 
     assertEquals(ParsingState.SUCCESSFUL, root.matcher.state)
 
@@ -68,9 +67,11 @@ def testFailure(input: str):
     grammar = makeGrammar()
     lexer = Lexer(input)
     parser = RDParser(grammar, lexer, ebnfparsednodefactory.INSTANCE)
-    root = parser.parse()
-    print(graphviz.toVizDotLink(root))
-    assertNotEquals(ParsingState.SUCCESSFUL, root.matcher.state)
+    try:
+        root = parser.parse()
+        assertNotEquals(ParsingState.SUCCESSFUL, root.matcher.state)
+    except ParseException:
+        pass
 
 
 def test1():

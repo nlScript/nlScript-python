@@ -65,7 +65,7 @@ class Window(QWidget):
             self.boxes.append(box)
 
     def resizeEvent(self, event):
-        self.showBoxes()
+        # self.showBoxes()
         super().resizeEvent(event)
 
 

@@ -1,6 +1,8 @@
-from PyQt5 import QtGui, QtCore
+from typing import List
+
+from PyQt5 import QtGui
 from PyQt5.QtCore import QSize, QRect, Qt
-from PyQt5.QtGui import QPaintEvent, QColor, QTextFormat, QPainter, QTextBlock, QTextCursor, QTextBlockFormat
+from PyQt5.QtGui import QPaintEvent, QColor, QTextFormat, QPainter, QTextBlock, QTextCursor, QTextCharFormat
 from PyQt5.QtWidgets import QPlainTextEdit, QWidget, QTextEdit
 
 
@@ -19,12 +21,32 @@ class CodeEditor(QPlainTextEdit):
         font.setBold(True)
         self.document().setDefaultFont(font)
         self.lineNumberArea = LineNumberArea(self)
+        self.currentLineSelection: QTextEdit.ExtraSelection | None = None
+        self.myExtraSelections: List[QTextEdit.ExtraSelection] = []
+
         self.blockCountChanged.connect(self.updateLineNumberAreaWidth)
         self.updateRequest.connect(self.updateLineNumberArea)
         self.cursorPositionChanged.connect(self.highlightCurrentLine)
 
         self.updateLineNumberAreaWidth(0)
         self.highlightCurrentLine()
+
+    def removeExtraSelection(self, s: QTextEdit.ExtraSelection) -> None:
+        if s is not None:
+            try:
+                self.myExtraSelections.remove(s)
+            except ValueError:
+                print("no existing ExtraSelection " + str(s))
+
+    def addExtrasSelection(self, s: QTextEdit.ExtraSelection) -> None:
+        self.myExtraSelections.append(s)
+
+    def prependExtraSelection(self, s: QTextEdit.ExtraSelection) -> None:
+        self.myExtraSelections.insert(0, s)
+
+    def updateExtraSelections(self):
+        self.setExtraSelections(self.myExtraSelections)
+
 
     def lineNumberAreaPaintEvent(self, event: QPaintEvent) -> None:
         painter = QPainter(self.lineNumberArea)
@@ -71,19 +93,19 @@ class CodeEditor(QPlainTextEdit):
         self.setViewportMargins(self.lineNumberAreaWidth(), 0, 0, 0)
 
     def highlightCurrentLine(self) -> None:
-        selections = list(filter(lambda s: not isinstance(s, CurrentLineSelection), self.extraSelections()))
-        selections.clear()
+        self.removeExtraSelection(self.currentLineSelection)
 
-        selection = CurrentLineSelection()
+        selection = QTextEdit.ExtraSelection()
         selection.format.setBackground(CodeEditor.activeLineBackground)
         selection.format.setProperty(QTextFormat.FullWidthSelection, True)
         tc = self.textCursor()
         tc.setPosition(tc.position(), QTextCursor.MoveAnchor)
         selection.cursor = tc
+        self.currentLineSelection = selection
 
-        selections.append(selection)
-        print("selections", len(selections))
-        self.setExtraSelections(selections)
+        self.prependExtraSelection(selection)
+        print("selections", len(self.myExtraSelections))
+        self.updateExtraSelections()
 
     def updateLineNumberArea(self, rect: QRect, dy: int) -> None:
         if dy > 0:
@@ -93,11 +115,6 @@ class CodeEditor(QPlainTextEdit):
 
         if rect.contains(self.viewport().rect()):
             self.updateLineNumberAreaWidth(0)
-
-
-class CurrentLineSelection(QTextEdit.ExtraSelection):
-    def __init__(self):
-        super().__init__()
 
 
 class LineNumberArea(QWidget):

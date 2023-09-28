@@ -181,7 +181,7 @@ def test(inp: str, expectedCompletion: List[str]) -> None:
     parser = RDParser(grammar, lexer, ebnfparsednodefactory.INSTANCE)
     autocompletions: List[Autocompletion] = []
     pn = parser.parse(autocompletions)
-    print(graphviz.toVizDotLink(parser.buildAst(pn)))
+    print(graphviz.toVizDotLink(pn))
 
     print("input: " + inp)
     print("completions: " + str(autocompletions))

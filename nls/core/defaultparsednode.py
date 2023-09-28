@@ -1,11 +1,11 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-
+from nls.core.named import Named
 from nls.core.terminal import Terminal, Literal
 
+
 if TYPE_CHECKING:
-    from nls.autocompleter import IAutocompleter
     from nls.core.production import Production
     from nls.core.matcher import Matcher
     from nls.core.symbol import Symbol
@@ -51,8 +51,13 @@ class DefaultParsedNode:
         if isinstance(self._symbol, Literal):
             return self._symbol.symbol
 
+        name: str = self.name
+        if name == Named.UNNAMED:
+            name = self.symbol.symbol
+
         if isinstance(self._symbol, Terminal):
-            return IAutocompleter.VETO if len(self.getParsedString()) > 0 else "${" + self.name + "}"
+            from nls.autocompleter import IAutocompleter
+            return IAutocompleter.VETO if len(self.getParsedString()) > 0 else "${" + name + "}"
 
         return None
 

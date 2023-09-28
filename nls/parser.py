@@ -20,7 +20,7 @@ from nls.core.symbol import Symbol
 from nls.core.named import Named
 
 if TYPE_CHECKING:
-    from nls.ebnf.rule import Rule
+    from nls.ebnf.rule import Rule, NamedRule
     from nls.ebnf.ebnfcore import EBNFCore
 
 
@@ -82,8 +82,6 @@ class Parser:
         pn = parser.parse()
         if pn.matcher.state != ParsingState.SUCCESSFUL:
             raise Exception("Parsing failed")
-        pn = parser.buildAst(pn)
-        print(graphviz.toVizDotLink(pn))
         rhs = cast(List[Named], pn.evaluate())
 
         newRule = self._targetGrammar.sequence(typ, rhs)
@@ -106,12 +104,7 @@ class Parser:
         self._symbol2Autocompletion.clear()
         rdParser = EBNFParser(self._targetGrammar.getBNF(), Lexer(text))
         rdParser.addParseStartListener(ParseStartListener(self.fireParsingStarted))
-        pn = cast(ParsedNode, rdParser.parse(autocompletions))
-        # print(graphviz.toVizDotLink(pn))
-        if pn.matcher.state == ParsingState.SUCCESSFUL:
-            pn = cast(ParsedNode, rdParser.buildAst(pn))
-        # print(graphviz.toVizDotLink(pn))
-        return pn
+        return cast(ParsedNode, rdParser.parse(autocompletions))
 
     def quantifier(self) -> Rule:
         g = self._grammar

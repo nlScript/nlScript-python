@@ -15,6 +15,7 @@ from nls.ebnf.repeat import Repeat
 from nls.ebnf.star import Star
 from nls.evaluator import Evaluator
 from nls.parsednode import ParsedNode
+from nls.parseexception import ParseException
 from nls.parser import Parser
 from nls.util.range import OPTIONAL, STAR, PLUS, Range
 
@@ -34,8 +35,6 @@ def evaluate(grammar: EBNF, input: str) -> object:
     parser = RDParser(grammar.getBNF(), lexer, ebnfparsednodefactory.INSTANCE)
     p = parser.parse()
     print(graphviz.toVizDotLink(p))
-    p = parser.buildAst(p)
-    print(graphviz.toVizDotLink(p))
 
     return p.evaluate()
 
@@ -43,10 +42,13 @@ def evaluate(grammar: EBNF, input: str) -> object:
 def checkFailed(grammar: BNF, input: str) -> None:
     lexer = Lexer(input)
     parser = RDParser(grammar, lexer, ebnfparsednodefactory.INSTANCE)
-    p = parser.parse()
-    print(graphviz.toVizDotLink(p))
-    if p.matcher.state == ParsingState.SUCCESSFUL:
-        raise Exception("Expected failure")
+    try:
+        p = parser.parse()
+        if p.matcher.state == ParsingState.SUCCESSFUL:
+            raise Exception("Expected failure")
+    except ParseException:
+        pass
+
 
 
 def testQuantifier():
@@ -87,7 +89,6 @@ def evaluateHighlevelParser(hlp: Parser, input: str) -> object:
     p = parser.parse()
     if p.matcher.state is not ParsingState.SUCCESSFUL:
         raise Exception("Parsing failed")
-    p = parser.buildAst(p)
     return p.evaluate()
 
 
@@ -104,7 +105,7 @@ def testList():
     tgt = hlp.targetGrammar
     tgt.compile(list)
     rdParser = RDParser(tgt.getBNF(), Lexer("1, 2, 3"), ebnfparsednodefactory.INSTANCE)
-    pn = rdParser.buildAst(rdParser.parse())
+    pn = rdParser.parse()
     assertEquals(ParsingState.SUCCESSFUL, pn.matcher.state)
     result = cast(List[int], pn.evaluate())
 
@@ -131,8 +132,6 @@ def testTuple():
     print(graphviz.toVizDotLink(pn))
 
     assertEquals(ParsingState.SUCCESSFUL, pn.matcher.state)
-    pn = rdParser.buildAst(pn)
-    print(graphviz.toVizDotLink(pn))
     result = cast(List[int], pn.evaluate())
 
     assertEquals(1, result[0])
@@ -162,7 +161,7 @@ def testType():
     tgt = hlp.targetGrammar
     tgt.compile(tuple)
     rdParser = RDParser(tgt.getBNF(), Lexer("(1, 2, 3)"), ebnfparsednodefactory.INSTANCE)
-    pn = rdParser.buildAst(rdParser.parse())
+    pn = rdParser.parse()
     assertEquals(ParsingState.SUCCESSFUL, pn.matcher.state)
     print(graphviz.toVizDotLink(pn))
     result = cast(List[int], pn.evaluate())
@@ -181,7 +180,7 @@ def testType():
     tgt = hlp.targetGrammar
     tgt.compile(list)
     rdParser = RDParser(tgt.getBNF(), Lexer("1, 2, 3"), ebnfparsednodefactory.INSTANCE)
-    pn = rdParser.buildAst(rdParser.parse())
+    pn = rdParser.parse()
     print(graphviz.toVizDotLink(pn))
     assertEquals(ParsingState.SUCCESSFUL, pn.matcher.state)
     result = cast(List[int], pn.evaluate())
@@ -201,7 +200,7 @@ def testType():
     tgt = hlp.targetGrammar
     tgt.compile(identifier)
     rdParser = RDParser(tgt.getBNF(), Lexer("3"), ebnfparsednodefactory.INSTANCE)
-    pn = rdParser.buildAst(rdParser.parse())
+    pn = rdParser.parse()
     print(graphviz.toVizDotLink(pn))
     assertEquals(ParsingState.SUCCESSFUL, pn.matcher.state)
     assertEquals(3, pn.evaluate())
@@ -314,8 +313,8 @@ def testNoVariable():
     try:
         evaluateHighlevelParser(hlp2, testToFail)
         raise Exception()  # throw if it did not fail
-    except Exception as ex:
-        assertEquals("Parsing failed", ex.args[0])
+    except ParseException:
+        pass
 
 
 def testExpression():
@@ -332,7 +331,7 @@ def testExpression():
     # now parse and evaluate the generated grammar:
     tgt.compile(myType.tgt)
     rdParser = RDParser(tgt.getBNF(), Lexer("Today, let's wait for 5 minutes."), ebnfparsednodefactory.INSTANCE)
-    pn = rdParser.buildAst(rdParser.parse())
+    pn = rdParser.parse()
     assertEquals(ParsingState.SUCCESSFUL, pn.matcher.state)
     print(graphviz.toVizDotLink(pn))
 

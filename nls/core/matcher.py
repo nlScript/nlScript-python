@@ -29,7 +29,7 @@ class Matcher:
             return False
         tParsedLength = self.pos + len(self.parsed)
         oParsedLength = other.pos + len(other.parsed)
-        return tParsedLength > oParsedLength
+        return tParsedLength >= oParsedLength
 
     def __str__(self) -> str:
         return str(self._state) + ": '" + self._parsed + "' (" + str(self._pos) + ")"
