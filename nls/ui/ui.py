@@ -410,7 +410,6 @@ class ParameterizedCompletionContext(QObject):
         self.parameterChanged.emit(currentParameterIndex, last)
 
     def cancel(self) -> None:
-        print("cancel")
         for p in self._parameters:
             self._tc.removeExtraSelection(p.highlight)
         self._tc.updateExtraSelections()
@@ -424,12 +423,10 @@ class ParameterizedCompletionContext(QObject):
 
         if event.type() == QEvent.KeyPress and obj is self._tc:
             if event.key() == Qt.Key_Tab or event.key() == Qt.Key_Return:
-                print("  pressed TAB")
                 self.next()
                 event.accept()
                 return True
             elif event.key() == Qt.Key_Backtab:
-                print("  pressed BACKTAB")
                 self.previous()
                 event.accept()
                 return True
