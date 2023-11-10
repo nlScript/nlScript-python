@@ -115,7 +115,7 @@ class AutocompletionContext(CodeEditor):
         self.parameterizedCompletion: ParameterizedCompletionContext | None = None
 
         self.parser = parser
-        self.completer = MyCompleter(parent)
+        self.completer = ACPopup(parent)
         self.completer.setWidget(self)
 
     def insertCompletion(self, completion: str) -> None:
@@ -273,7 +273,7 @@ class MyDelegate(QItemDelegate):
         # self.drawDisplay(painter, option, option.rect, text)
 
 
-class MyCompleter(QCompleter):
+class ACPopup(QCompleter):
 
     def __init__(self, parent=None):
         QCompleter.__init__(self, parent)
