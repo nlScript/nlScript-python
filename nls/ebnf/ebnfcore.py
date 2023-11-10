@@ -176,9 +176,11 @@ class EBNFCore:
         delimiter = self.sequence(None, [wsStar, literal(",").withName("delimiter"), wsStar]).tgt
         ret = self.joinWithNames(typ, child, jopen, jclose, delimiter, names=names)
 
-        def getAutocompletion(pn: ParsedNode) -> str or None:
+        def getAutocompletion(pn: ParsedNode, justCheck: bool) -> str or None:
             if len(pn.getParsedString()) > 0:
                 return None
+            if justCheck:
+                return Autocompleter.DOES_AUTOCOMPLETE
             rule = cast(Join, pn.getRule())
             sb = "(${" + rule.getNameForChild(0) + "}"
             for i in range(1, rule.cardinality.lower):

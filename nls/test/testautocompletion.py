@@ -83,7 +83,7 @@ def test05():
 
     parser.defineType("defined-channels", "'{channel:[A-Za-z0-9]:+}'",
             None,
-            Autocompleter(lambda pn: ";;;".join(definedChannels)))
+            Autocompleter(lambda pn, justCheck: ";;;".join(definedChannels)))
 
     parser.defineSentence("Use channel {channel:defined-channels}.", None)
 
@@ -139,10 +139,10 @@ def test06():
 def test07():
     parser = Parser()
 
-    parser.defineType("led", "385nm", evaluator=None, autocompleter=Autocompleter(lambda e: "385nm"))
-    parser.defineType("led", "470nm", evaluator=None, autocompleter=Autocompleter(lambda e: "470nm"))
-    parser.defineType("led", "567nm", evaluator=None, autocompleter=Autocompleter(lambda e: "567nm"))
-    parser.defineType("led", "625nm", evaluator=None, autocompleter=Autocompleter(lambda e: "625nm"))
+    parser.defineType("led", "385nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: "385nm"))
+    parser.defineType("led", "470nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: "470nm"))
+    parser.defineType("led", "567nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: "567nm"))
+    parser.defineType("led", "625nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: "625nm"))
 
     parser.defineType("led-power", "{<led-power>:int}%", evaluator=None, autocompleter=True)
     parser.defineType("led-setting", "{led-power:led-power} at {wavelength:led}", None, True)
@@ -195,7 +195,7 @@ def getCompletionStrings(autocompletions: List[Autocompletion]) -> List[str]:
 
 
 def makeGrammar() -> BNF:
-    def getAutocompletion(pn: ParsedNode) -> str or None:
+    def getAutocompletion(pn: ParsedNode, justCheck: bool) -> str or None:
         if len(pn.getParsedString()) > 0:
             return Autocompleter.VETO
         return "${" + pn.name + "}"

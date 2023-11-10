@@ -42,9 +42,9 @@ class DefaultParsedNode:
         return self._matcher
 
     def doesAutocomplete(self) -> bool:
-        return self.getAutocompletion() is not None
+        return self.getAutocompletion(True) is not None
 
-    def getAutocompletion(self) -> str or None:
+    def getAutocompletion(self, justCheck: bool) -> str or None:
         if self._symbol is None:
             return None
 

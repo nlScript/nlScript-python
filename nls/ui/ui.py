@@ -5,9 +5,9 @@ from typing import cast, List
 
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import Qt, QStringListModel, QRect, QObject, QEvent, QModelIndex
-from PyQt5.QtGui import QTextCursor, QKeyEvent, QColor, QPalette, QTextCharFormat, QFont
+from PyQt5.QtGui import QTextCursor, QKeyEvent, QColor, QPalette, QFont
 from PyQt5.QtWidgets import QCompleter, QPlainTextEdit, QApplication, QTextEdit, QItemDelegate, QStyleOptionViewItem, \
-    QWidget, QSplitter, QHBoxLayout, QPushButton, QVBoxLayout
+    QWidget, QSplitter, QPushButton, QVBoxLayout
 
 from nls.autocompleter import IfNothingYetEnteredAutocompleter, Autocompleter
 from nls.core.autocompletion import Autocompletion
@@ -71,7 +71,7 @@ class ACEditor(QWidget):
 
 class ErrorHighlight:
     def __init__(self, tc: CodeEditor):
-        self._tc = tc;
+        self._tc = tc
         self.highlight: QTextEdit.ExtraSelection | None = None
 
     def setError(self, i0: int, i1: int) -> None:
@@ -566,11 +566,11 @@ def initParser2():
 
     parser.defineType("defined-channels", "'{channel:[A-Za-z0-9]:+}'",
             evaluator=None,
-            autocompleter=Autocompleter(lambda e: ";;;".join(definedChannels) if len(definedChannels) >= 1 else None))
+            autocompleter=Autocompleter(lambda e, justCheck: ";;;".join(definedChannels) if len(definedChannels) >= 1 else None))
 
     parser.defineType("defined-positions", "'{position:[A-Za-z0-9]:+}'",
             evaluator=Evaluator(lambda e: e.getParsedString("position")),
-            autocompleter=Autocompleter(lambda e: ";;;".join(definedRegions)))
+            autocompleter=Autocompleter(lambda e, justCheck: ";;;".join(definedRegions)))
 
     parser.defineType("time-unit", "second(s)", evaluator=Evaluator(lambda: 1))
     parser.defineType("time-unit", "minute(s)", evaluator=Evaluator(lambda: 60))

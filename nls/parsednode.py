@@ -44,11 +44,11 @@ class ParsedNode(DefaultParsedNode):
             return False
         return thisRule == parentRule
 
-    def getAutocompletion(self) -> str or None:
+    def getAutocompletion(self, justCheck: bool) -> str or None:
         rule = self.getRule()
         if rule is not None and rule.getAutocompleter() is not None and not self.parentHasSameRule():
-            return rule.getAutocompleter().getAutocompletion(self)
-        return super().getAutocompletion()
+            return rule.getAutocompleter().getAutocompletion(self, justCheck)
+        return super().getAutocompletion(justCheck)
 
     def notifyListeners(self) -> None:
         for child in self.children:

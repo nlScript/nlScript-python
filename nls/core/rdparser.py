@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, cast
 
+from nls.core.graphviz import toVizDotLink
 from nls.core.parsingstate import ParsingState
 from nls.core.matcher import Matcher
 from nls.autocompleter import IAutocompleter
@@ -52,6 +53,7 @@ class RDParser:
         ret = self.createParsedTree(parsedSequence, last)
         ret = self.buildAst(ret)
         if ret.matcher.state == ParsingState.FAILED:
+            print(toVizDotLink(ret))
             raise ParseException(ret, last[0], self)
         return ret
 
@@ -96,7 +98,7 @@ class RDParser:
 
         autocompletingParentStart = autocompletingParent.matcher.pos
         alreadyEntered = self._lexer.substring(autocompletingParentStart)
-        completion = autocompletingParent.getAutocompletion()
+        completion = autocompletingParent.getAutocompletion(False)
         if completion is not None and len(completion) > 0:
             for c in completion.split(";;;"):
                 if c == IAutocompleter.VETO:

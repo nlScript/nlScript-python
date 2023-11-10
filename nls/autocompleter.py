@@ -21,17 +21,19 @@ if TYPE_CHECKING:
 class IAutocompleter(ABC):
     VETO = "VETO"
 
+    DOES_AUTOCOMPLETE = "DOES_AUTOCOMPLETE"
+
     @abstractmethod
-    def getAutocompletion(self, pn: ParsedNode) -> str or None:
+    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
         pass
 
 
 class Autocompleter(IAutocompleter):
-    def __init__(self, getAutocompletion: Callable[[ParsedNode], str]):
+    def __init__(self, getAutocompletion: Callable[[ParsedNode, bool], str]):
         self._getAutocompletion = getAutocompletion
 
-    def getAutocompletion(self, pn: ParsedNode) -> str or None:
-        return self._getAutocompletion(pn)
+    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
+        return self._getAutocompletion(pn, justCheck)
 
 
 class IfNothingYetEnteredAutocompleter(IAutocompleter):
@@ -39,12 +41,12 @@ class IfNothingYetEnteredAutocompleter(IAutocompleter):
         self._completion = completion
 
     # override abstract method
-    def getAutocompletion(self, pn: ParsedNode) -> str or None:
+    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
         return self._completion if len(pn.getParsedString()) == 0 else ""
 
 
 class DefaultInlineAutocompleter(IAutocompleter):
-    def getAutocompletion(self, pn: ParsedNode) -> str or None:
+    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
         alreadyEntered = pn.getParsedString()
         if len(alreadyEntered) > 0:
             return IAutocompleter.VETO
@@ -58,7 +60,7 @@ class DefaultInlineAutocompleter(IAutocompleter):
 
 
 class EmptyAutocompleter(IAutocompleter):
-    def getAutocompletion(self, pn: ParsedNode) -> str or None:
+    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
         return ""
 
 
@@ -69,12 +71,15 @@ class EntireSequenceAutocompleter(IAutocompleter):
         self._ebnf = ebnf
         self._symbol2Autocompletion = symbol2Autocompletion
 
-    def getAutocompletion(self, pn: ParsedNode) -> str or None:
+    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
         EntireSequenceAutocompleter.calledNTimes += 1
         import nls.core.rdparser
         alreadyEntered = pn.getParsedString()
         if len(alreadyEntered) > 0:
             return None
+
+        if justCheck:
+            return Autocompleter.DOES_AUTOCOMPLETE
 
         autocompletionString = ""
         sequence = pn.getRule()
@@ -117,7 +122,9 @@ class PathAutocompleter(IAutocompleter):
     def __init__(self):
         pass
 
-    def getAutocompletion(self, pn: ParsedNode) -> str or None:
+    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
+        if justCheck:
+            return Autocompleter.DOES_AUTOCOMPLETE
         ret = CompletePath.getCompletion(pn.getParsedString())
         print("return " + ret)
         return ret
