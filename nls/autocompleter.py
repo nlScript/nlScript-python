@@ -125,9 +125,7 @@ class PathAutocompleter(IAutocompleter):
     def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
         if justCheck:
             return Autocompleter.DOES_AUTOCOMPLETE
-        ret = CompletePath.getCompletion(pn.getParsedString())
-        print("return " + ret)
-        return ret
+        return CompletePath.getCompletion(pn.getParsedString())
 
 
 DEFAULT_INLINE_AUTOCOMPLETER = DefaultInlineAutocompleter()
