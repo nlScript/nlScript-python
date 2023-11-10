@@ -31,7 +31,7 @@ class ACEditor(QWidget):
 
         splitter = QSplitter(Qt.Vertical)
 
-        self._textEdit = AwesomeTextEdit(parser, parent=splitter)
+        self._textEdit = AutocompletionContext(parser, parent=splitter)
         self._outputArea = QPlainTextEdit(parent=splitter)
         font = QtGui.QFont()
         font.setFamily("Courier")
@@ -93,9 +93,9 @@ class ErrorHighlight:
             self._tc.removeExtraSelection(self.highlight)
 
 
-class AwesomeTextEdit(CodeEditor):
+class AutocompletionContext(CodeEditor):
     def __init__(self, parser:Parser, parent=None):
-        super(AwesomeTextEdit, self).__init__(parent)
+        super(AutocompletionContext, self).__init__(parent)
 
         self._errorHighlight = ErrorHighlight(tc=self)
 
@@ -170,12 +170,10 @@ class AwesomeTextEdit(CodeEditor):
         c.setPosition(p)
         r = self.cursorRect(c)
         l.setRight(r.right())
-        print(self.viewportMargins().left())
         return l
 
     def paintEvent(self, e: QtGui.QPaintEvent) -> None:
         super().paintEvent(e)
-        print("Paint ", len(self.extraSelections()))
         if self.parameterizedCompletion is None:
             return
         painter = QtGui.QPainter(self.viewport())
@@ -239,17 +237,14 @@ class AwesomeTextEdit(CodeEditor):
             self.completer.setCompletionPrefix(alreadyEntered)
 
             remainingText = entireText[anchor:]
-            print("remainingText = ", remainingText)
             matchingLength = 0
             for ac in autocompletions:
                 remainingCompletion = ac.completion[len(alreadyEntered):]
-                print("remainingCompletion", remainingCompletion)
                 if remainingText.startswith(remainingCompletion):
                     matchingLength = len(remainingCompletion)
                     break
 
             if matchingLength > 0:
-                print("matching length", matchingLength)
                 cursor = self.textCursor()
                 cursor.setPosition(anchor)
                 cursor.movePosition(QTextCursor.Right, QTextCursor.KeepAnchor, matchingLength)
