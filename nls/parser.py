@@ -54,7 +54,7 @@ class Parser:
         return self._grammar
 
     @property
-    def targetGrammar(self) -> EBNFCore:
+    def targetGrammar(self) -> EBNF:
         return self._targetGrammar
 
     def defineSentence(
