@@ -2,12 +2,18 @@ from __future__ import annotations
 
 from typing import List, TYPE_CHECKING
 
+import logging
+
 from nls.core.nonterminal import NonTerminal
 from nls.core.terminal import END_OF_INPUT
 
 if TYPE_CHECKING:
     from nls.core.production import Production
     from nls.core.symbol import Symbol
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class BNF:
@@ -34,7 +40,7 @@ class BNF:
     def addProduction(self, p: Production) -> Production:
         try:
             pIdx = self._productions.index(p)
-            print("production is already there...", str(self._productions[pIdx]))
+            logger.info("production is already there...", str(self._productions[pIdx]))
             return self._productions[pIdx]
         except ValueError:
             self._productions.append(p)
