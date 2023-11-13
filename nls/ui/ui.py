@@ -120,6 +120,15 @@ class AutocompletionContext(CodeEditor):
 
     def insertCompletion(self, completion: str) -> None:
         tc = self.textCursor()
+
+        cursor = self.textCursor()
+        cursor.setPosition(cursor.anchor())
+        cr = self.cursorRect(cursor)
+
+        entireText = self.toPlainText()
+        caret = self.textCursor().position()
+        cursorIsAtEnd = caret == len(entireText) or len(entireText[caret:].strip()) == 0
+
         # select the previous len(completionPrefix) characters:
         tc.movePosition(QTextCursor.PreviousCharacter, QTextCursor.KeepAnchor, len(self.completer.completionPrefix()))
 
@@ -130,11 +139,12 @@ class AutocompletionContext(CodeEditor):
             self.parameterizedCompletion.parameterChanged.connect(self.parameterChanged)
             self.parameterizedCompletion.replaceSelection(completion)
         except ValueError:
-            self.cancelParameterizedCompletion()
+            # self.cancelParameterizedCompletion()
             tc.removeSelectedText()
             tc.insertText(completion)
             self.completer.popup().hide()
-            self.autocomplete()
+            if cursorIsAtEnd:
+                self.autocomplete()
 
     def parameterChanged(self, pIdx: int, wasLast: bool) -> None:
         if wasLast:
@@ -213,8 +223,6 @@ class AutocompletionContext(CodeEditor):
 
         entireText = self.toPlainText()
         anchor = self.textCursor().anchor()
-        cursorIsAtEnd = anchor == len(entireText) or len(entireText[anchor:].strip()) == 0
-        autoinsertSingleOption = autoinsertSingleOption and cursorIsAtEnd
 
         textToCursor = self.toPlainText()[0:anchor]
         autocompletions: List[Autocompletion] = []
