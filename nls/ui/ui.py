@@ -202,7 +202,8 @@ class AutocompletionContext(CodeEditor):
 
         QPlainTextEdit.keyPressEvent(self, event)
 
-        if len(event.text()) != 0:
+        etext = event.text()
+        if len(etext) > 0 and etext.isprintable():
             self.autocomplete()
 
     def autocomplete(self, autoinsertSingleOption: bool = True):
