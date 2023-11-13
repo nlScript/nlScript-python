@@ -621,7 +621,7 @@ def initParser2():
         "{\n  }{channel-list:channel-list}" +
         # "{\n  }with a resolution of {dx:float} x {dy:float} x {dz:float} microns.",
         "{\n  }with a plane distance of {dz:z-distance}" +
-        "{\n  }using the {lens:lens} with the {magnification:mag} and a binning of {binning:binning}",
+        "{\n  }using the {lens:lens} with the {magnification:mag} and a binning of {binning:binning}.",
         None)
 
     parser.defineSentence(
