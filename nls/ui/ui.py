@@ -56,6 +56,24 @@ class ACEditor(QWidget):
     def getText(self) -> str:
         return self._textEdit.document().toPlainText()
 
+    def getSelectedLinesStart(self) -> str:
+        tc: QTextCursor = self._textEdit.textCursor()
+        start: int = tc.selectionStart()
+        tc.setPosition(start)
+        tc.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
+        return tc.position()
+
+    def getSelectedLines(self) -> str:
+        tc: QTextCursor = self._textEdit.textCursor()
+        start: int = tc.selectionStart()
+        end: int = tc.selectionEnd()
+        tc.setPosition(start)
+        tc.movePosition(QTextCursor.StartOfLine, QTextCursor.MoveAnchor)
+        tc.setPosition(end, QTextCursor.KeepAnchor)
+        tc.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+        selected: str = tc.selection().toPlainText()
+        return selected
+
     def run(self) -> None:
         try:
             self._outputArea.setPlainText("")
