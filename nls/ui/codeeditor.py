@@ -47,7 +47,6 @@ class CodeEditor(QPlainTextEdit):
     def updateExtraSelections(self):
         self.setExtraSelections(self.myExtraSelections)
 
-
     def lineNumberAreaPaintEvent(self, event: QPaintEvent) -> None:
         painter = QPainter(self.lineNumberArea)
         painter.fillRect(event.rect(), CodeEditor.lineNumberBackground)
