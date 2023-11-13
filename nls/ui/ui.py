@@ -574,6 +574,12 @@ def initParser2():
         return round(n * unit)
     parser.defineType("time-interval", "{n:float} {time-unit:time-unit}", Evaluator(inSeconds), True)
 
+    parser.defineType("repetition", "once", Evaluator(lambda e: [1, 0]))
+
+    parser.defineType("repetition", "every {interval:time-interval} for {duration:time-interval}",
+                      Evaluator(lambda e: [e.evaluate("interval"), e.evaluate("duration")]),
+                      True)
+
     parser.defineType("z-distance", "{z-distance:float} microns", None, True)
 
     parser.defineType("lens",  "5x lens", None)
@@ -585,33 +591,57 @@ def initParser2():
 
     parser.defineType("binning", "1 x 1", evaluator=Evaluator(lambda: 1))
     parser.defineType("binning", "2 x 2", evaluator=Evaluator(lambda: 2))
+    parser.defineType("binning", "3 x 3", evaluator=Evaluator(lambda: 3))
     parser.defineType("binning", "4 x 4", evaluator=Evaluator(lambda: 4))
-    parser.defineType("binning", "8 x 8", evaluator=Evaluator(lambda: 8))
+    parser.defineType("binning", "5 x 5", evaluator=Evaluator(lambda: 5))
+
+    parser.defineType("start", "At the beginning", None)
+    parser.defineType("start", "At {time:time}", None, True)
+    parser.defineType("start", "After {delay:time-interval}", None, True)
+
+    parser.defineType("position-list", "all positions", None)
+    parser.defineType("position-list", "position(s) {positions:list<defined-positions>}", None)
+
+    parser.defineType("channel-list", "all channels", None)
+    parser.defineType("channel-list", "channel(s) {channels:list<defined-channels>}", None)
+
+    parser.defineSentence(
+        "{star:start}{, }acquire..." +
+        "{\n  }{repetition:repetition}" +
+        "{\n  }{position-list:position-list}" +
+        "{\n  }{channel-list:channel-list}" +
+        # "{\n  }with a resolution of {dx:float} x {dy:float} x {dz:float} microns.",
+        "{\n  }with a plane distance of {dz:z-distance}" +
+        "{\n  }using the {lens:lens} with the {magnification:mag} and a binning of {binning:binning}",
+        None)
+
+    parser.defineSentence(
+        "{start:start}{, }adjust..." +
+        "{\n  }{repetition:repetition}" +
+        "{\n  }the power of the {led:led} led of channel {channel:defined-channels} to {power:led-power}.",
+        None)
+
+    parser.defineSentence(
+        "{start:start}{, }adjust..." +
+        "{\n  }{repetition:repetition}" +
+        "{\n  }the exposure time of channel {channel:defined-channels} to {exposure-time:exposure-time}.",
+        None)
 
     parser.defineType("temperature", "{temperature:float}\u00B0C", None, True)
     parser.defineType("co2-concentration", "{CO2 concentration:float}%", None, True)
 
-    parser.defineType("incubation", "set the temperature to {temperature:temperature}", None)
+    parser.defineSentence(
+        "{start:start}{, }adjust..." +
+        "{\n  }{repetition:repetition}" +
+        "{\n  }the CO2 concentration to {co2-concentration:co2-concentration}.",
+        None)
 
-    parser.defineType("incubation", "set the CO2 concentration to {co2-concentration:co2-concentration}", None)
+    parser.defineSentence(
+        "{start:start}{, }adjust..." +
+        "{\n  }{repetition:repetition}" +
+        "{\n  }the temperature to {temperature:temperature}.",
+        None)
 
-    parser.defineType("acquisition",
-            "acquire..." +
-                    "{\n  }every {interval:time-interval} for {duration:time-interval}" +
-                    "{\n  }position(s) {positions:list<defined-positions>}" +
-                    "{\n  }channel(s) {channels:list<defined-channels>}" +
-                    # "{\n  }with a resolution of {dx:float} x {dy:float} x {dz:float} microns.",
-                    "{\n  }with a plane distance of {dz:z-distance}" +
-                    "{\n  }using the {lens:lens} with the {magnification:mag} and a binning of {binning:binning}",
-            None)
-
-    parser.defineType("start", "At the beginning",            None)
-    parser.defineType("start", "At {time:time}",              None, True)
-    parser.defineType("start", "After {delay:time-interval}", None, True)
-
-    parser.defineSentence("{start:start}, {acquisition:acquisition}.", None)
-
-    parser.defineSentence("{start:start}, {incubation:incubation}.", None)
     return parser
 
 
