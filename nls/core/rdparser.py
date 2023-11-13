@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, cast
+from typing import TYPE_CHECKING, List, cast, Set
 
 from nls.core.graphviz import toVizDotLink
 from nls.core.parsingstate import ParsingState
@@ -69,13 +69,23 @@ class RDParser:
         return pn
 
     def collectAutocompletions(self, endOfInput: List[SymbolSequence], autocompletions: List[Autocompletion]) -> None:
+        autocompletingParents: List[DefaultParsedNode] = []
         for seq in endOfInput:
-            self.addAutocompletions(seq, autocompletions)
+            self.collectAutocompletingParents(seq, autocompletingParents)
+        done: Set[str] = set()
+        for autocompletingParent in autocompletingParents:
+            prod = autocompletingParent.production
+            if prod is not None:
+                key = prod.left.symbol + ":"
+                for s in prod.right:
+                    key = key + s.symbol
+            else:
+                key = autocompletingParent.symbol.symbol
+            if key not in done:
+                self.addAutocompletions(autocompletingParent, autocompletions)
+                done.add(key)
 
-    def addAutocompletions(self, symbolSequence: SymbolSequence, autocompletions: List[Autocompletion or None]):
-        if len(autocompletions) > 0 and autocompletions[-1] is None:
-            return
-
+    def collectAutocompletingParents(self, symbolSequence: SymbolSequence, autocompletingParents: List[DefaultParsedNode]):
         last: List[DefaultParsedNode or None] = [None]
         self.createParsedTree(symbolSequence, last)
 
@@ -93,9 +103,12 @@ class RDParser:
             if tmp.doesAutocomplete():
                 autocompletingParent = tmp
                 break
-        if autocompletingParent is None:
-            return
+        if autocompletingParent is not None:
+            autocompletingParents.append(autocompletingParent)
 
+    def addAutocompletions(self, autocompletingParent: DefaultParsedNode, autocompletions: List[Autocompletion or None]):
+        if len(autocompletions) > 0 and autocompletions[-1] is None:
+            return
         autocompletingParentStart = autocompletingParent.matcher.pos
         alreadyEntered = self._lexer.substring(autocompletingParentStart)
         completion = autocompletingParent.getAutocompletion(False)
