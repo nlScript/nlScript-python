@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import sys
 import time
-from typing import cast, List
+import traceback
+from typing import cast, List, Callable
 
 from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import Qt, QStringListModel, QRect, QObject, QEvent, QModelIndex
+from PyQt5.QtCore import Qt, QStringListModel, QRect, QObject, QEvent, QModelIndex, pyqtSignal, pyqtSlot, \
+    QThreadPool, QRunnable
 from PyQt5.QtGui import QTextCursor, QKeyEvent, QColor, QPalette, QFont
 from PyQt5.QtWidgets import QCompleter, QPlainTextEdit, QApplication, QTextEdit, QItemDelegate, QStyleOptionViewItem, \
     QWidget, QSplitter, QPushButton, QVBoxLayout
@@ -21,7 +24,59 @@ from nls.parser import Parser
 from nls.ui.codeeditor import CodeEditor
 
 
+class WorkerSignals(QObject):
+    finished = pyqtSignal()
+    error = pyqtSignal(tuple)
+    result = pyqtSignal(object)
+
+
+class Worker(QRunnable):
+    """
+    Worker thread
+
+    Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
+
+    :param callback: The function callback to run on this worker thread. Supplied args and
+                     kwargs will be passed through to the runner.
+    :type callback: function
+    :param args: Arguments to pass to the callback function
+    :param kwargs: Keywords to pass to the callback function
+
+    """
+
+    def __init__(self, fn, *args, **kwargs):
+        super(Worker, self).__init__()
+        # Store constructor arguments (re-used for processing)
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()
+
+    @pyqtSlot()
+    def run(self):
+        """
+        Initialise the runner function with passed args, kwargs.
+        """
+
+        # Retrieve args/kwargs here; and fire processing using them
+        try:
+            result = self.fn(
+                *self.args, **self.kwargs
+            )
+        except:
+            traceback.print_exc()
+            exctype, value = sys.exc_info()[:2]
+            self.signals.error.emit((exctype, value, traceback.format_exc()))
+        else:
+            self.signals.result.emit(result)  # Return the result of the processing
+        finally:
+            self.signals.finished.emit()  # Done
+
+
 class ACEditor(QWidget):
+
+    work_requested = pyqtSignal(int)
+
     def __init__(self, parser: Parser, parent=None):
         super(ACEditor, self).__init__(parent)
 
@@ -46,12 +101,23 @@ class ACEditor(QWidget):
 
         vbox.addWidget(splitter)
 
-        run = QPushButton("Run", self)
-        run.clicked.connect(self.run)
-        vbox.addWidget(run, alignment=Qt.AlignCenter)
+        self.runButton = QPushButton("Run", self)
+        self.runButton.clicked.connect(self.run)
+        vbox.addWidget(self.runButton, alignment=Qt.AlignCenter)
 
         self.setLayout(vbox)
         self.resize(800, 600)
+
+        self._beforeRun: Callable[[], None] = lambda: None
+        self._afterRun: Callable[[], None] = lambda: None
+
+        self.threadpool = QThreadPool()
+
+    def setBeforeRun(self, beforeRun: Callable[[], None]) -> None:
+        self._beforeRun = beforeRun
+
+    def setAfterRun(self, afterRun: Callable[[], None]) -> None:
+        self._afterRun = afterRun
 
     def getText(self) -> str:
         return self._textEdit.document().toPlainText()
@@ -74,13 +140,22 @@ class ACEditor(QWidget):
         selected: str = tc.selection().toPlainText()
         return selected
 
-    def run(self) -> None:
+    def run(self, selectedLines: bool = False) -> None:
+        self._outputArea.setPlainText("")
+        self.runButton.setEnabled(False)
+        textToEvaluate = self.getSelectedLines() if selectedLines else self.getText()
+        worker = Worker(self.run_fn, self._parser, textToEvaluate)
+        worker.signals.finished.connect(lambda: self.runButton.setEnabled(True))
+        self.threadpool.start(worker)
+
+    def run_fn(self, parser: Parser, textToEvaluate: str) -> None:
         try:
-            self._outputArea.setPlainText("")
+            self._beforeRun()
             print("Parsing...")
-            pn: ParsedNode = self._parser.parse(self.getText())
+            pn: ParsedNode = parser.parse(textToEvaluate)
             print("Evaluating...")
             pn.evaluate()
+            self._afterRun()
             print("Done")
         except ParseException as e:
             self._outputArea.setPlainText(e.getError())
