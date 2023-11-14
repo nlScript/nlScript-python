@@ -84,9 +84,9 @@ class Literal(Terminal):
         symbol = self.symbol
         for i in range(len(symbol)):
             if lexer.isAtEnd(i):
-                return Matcher(ParsingState.END_OF_INPUT, pos, lexer.substring(pos, pos + i))
+                return Matcher(ParsingState.END_OF_INPUT, pos, lexer.substring(pos, pos + i + 1))
             if lexer.peek(i) != symbol[i]:
-                return Matcher(ParsingState.FAILED, pos, lexer.substring(pos, pos + i))
+                return Matcher(ParsingState.FAILED, pos, lexer.substring(pos, pos + i + 1))
 
         return Matcher(ParsingState.SUCCESSFUL, pos, symbol)
 
