@@ -214,10 +214,6 @@ class AutocompletionContext(CodeEditor):
     def insertCompletion(self, completion: str) -> None:
         tc = self.textCursor()
 
-        cursor = self.textCursor()
-        cursor.setPosition(cursor.anchor())
-        cr = self.cursorRect(cursor)
-
         entireText = self.toPlainText()
         caret = self.textCursor().position()
         cursorIsAtEnd = caret == len(entireText) or len(entireText[caret:].strip()) == 0
@@ -239,7 +235,7 @@ class AutocompletionContext(CodeEditor):
             if cursorIsAtEnd:
                 self.autocomplete()
 
-    def parameterChanged(self, pIdx: int, wasLast: bool) -> None:
+    def parameterChanged(self, _pIdx: int, wasLast: bool) -> None:
         if wasLast:
             self.cancelParameterizedCompletion()
             self.autocomplete()
@@ -269,11 +265,11 @@ class AutocompletionContext(CodeEditor):
         a = a + 1
         c = self.textCursor()
         c.setPosition(a)
-        l = self.cursorRect(c)
+        rect = self.cursorRect(c)
         c.setPosition(p)
         r = self.cursorRect(c)
-        l.setRight(r.right())
-        return l
+        rect.setRight(r.right())
+        return rect
 
     def paintEvent(self, e: QtGui.QPaintEvent) -> None:
         super().paintEvent(e)
@@ -537,12 +533,12 @@ class ParameterizedCompletionContext(QObject):
     def parseParameters(paramString: str, ret: List[ParsedParam]) -> str:
         varName = None
         insertString = ""
-        l = len(paramString)
+        paramStringLen = len(paramString)
         hlStart = -1
         i = 0
-        while i < l:
+        while i < paramStringLen:
             cha = paramString[i]
-            if cha == '$' and i < l - 1 and paramString[i + 1] == '{':
+            if cha == '$' and i < paramStringLen - 1 and paramString[i + 1] == '{':
                 if varName is None:
                     varName = ""
                     hlStart = len(insertString)
@@ -552,7 +548,7 @@ class ParameterizedCompletionContext(QObject):
 
             elif varName is not None and cha == '}':
                 hlEnd = len(insertString)
-                ret.append(ParsedParam(varName, hlStart, hlEnd)) # hlEnd is exclusive
+                ret.append(ParsedParam(varName, hlStart, hlEnd))  # hlEnd is exclusive
                 varName = None
 
             elif varName is not None:
@@ -651,12 +647,6 @@ def initParser2():
     ).onSuccessfulParsed(ParseListener(lambda n: definedRegions.append(n.getParsedString("region-name"))))
 
     parser.defineSentence("Define the output folder at {folder:path}.", None)
-
-    def safeRemove(aList: list[str], entry: str):
-        try:
-            aList.remove(entry)
-        except ValueError:
-            pass
 
     parser.defineType("defined-channels", "'{channel:[A-Za-z0-9]:+}'",
             evaluator=None,
