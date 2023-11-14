@@ -146,22 +146,19 @@ class ACEditor(QWidget):
         textToEvaluate = self.getSelectedLines() if selectedLines else self.getText()
         worker = Worker(self.run_fn, self._parser, textToEvaluate)
         worker.signals.finished.connect(lambda: self.runButton.setEnabled(True))
+        worker.signals.error.connect(lambda exc: self._outputArea.setPlainText(
+            exc[1].getError() if isinstance(exc[1], ParseException) else exc[2]
+        ))
         self.threadpool.start(worker)
 
     def run_fn(self, parser: Parser, textToEvaluate: str) -> None:
-        try:
-            self._beforeRun()
-            print("Parsing...")
-            pn: ParsedNode = parser.parse(textToEvaluate)
-            print("Evaluating...")
-            pn.evaluate()
-            self._afterRun()
-            print("Done")
-        except ParseException as e:
-            self._outputArea.setPlainText(e.getError())
-            return
-        except Exception:
-            self._outputArea.setPlainText(traceback.format_exc())
+        self._beforeRun()
+        print("Parsing...")
+        pn: ParsedNode = parser.parse(textToEvaluate)
+        print("Evaluating...")
+        pn.evaluate()
+        self._afterRun()
+        print("Done")
 
 
 class ErrorHighlight:
