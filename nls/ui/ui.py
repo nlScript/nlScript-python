@@ -294,6 +294,9 @@ class AutocompletionContext(CodeEditor):
             return
 
         if self.parameterizedCompletion is not None:
+            if event.key() == Qt.Key_Escape:
+                self.cancelParameterizedCompletion()
+                return
             if self.parameterizedCompletion.handleKeyPressed(self, event):
                 return
 
@@ -523,10 +526,6 @@ class ParameterizedCompletionContext(QObject):
                 return True
             elif event.key() == Qt.Key_Backtab:
                 self.previous()
-                event.accept()
-                return True
-            elif event.key() == Qt.Key_Escape:
-                self.cancel()
                 event.accept()
                 return True
         return False
