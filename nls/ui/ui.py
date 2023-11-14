@@ -159,7 +159,9 @@ class ACEditor(QWidget):
             print("Done")
         except ParseException as e:
             self._outputArea.setPlainText(e.getError())
-            pass
+            return
+        except Exception:
+            self._outputArea.setPlainText(traceback.format_exc())
 
 
 class ErrorHighlight:
