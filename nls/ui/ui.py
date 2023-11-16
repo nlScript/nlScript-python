@@ -186,7 +186,7 @@ class ErrorHighlight:
 
 
 class AutocompletionContext(CodeEditor):
-    def __init__(self, parser:Parser, parent=None):
+    def __init__(self, parser: Parser, parent=None):
         super(AutocompletionContext, self).__init__(parent)
 
         self._errorHighlight = ErrorHighlight(tc=self)
@@ -756,10 +756,10 @@ def testPathAutocompletion():
 
 
 def doProfile():
-    parser = initParser2()
+    parser = initParser()
     parser.compile()
 
-    textToCursor = "Define channel 'DAPI':\n  excite with 5% at 470nm"
+    textToCursor = "My favorite"
     autocompletions: List[Autocompletion] = []
 
     print("start")
@@ -788,16 +788,20 @@ def doProfile():
     print(",".join(map(lambda c: c.completion, autocompletions)))
 
 
-if __name__ == "__main__":
+def main():
     # doProfile()
     # testPathAutocompletion()
     # if True:
     #     exit(0)
 
-    parser = initParser2()
+    parser = initParser()
     parser.compile()
 
     app = QApplication([])
     te = ACEditor(parser)
     te.show()
     exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()
