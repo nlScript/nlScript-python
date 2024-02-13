@@ -75,8 +75,8 @@ class EntireSequenceAutocompleter(IAutocompleter):
         EntireSequenceAutocompleter.calledNTimes += 1
         import nls.core.rdparser
         alreadyEntered = pn.getParsedString()
-        if len(alreadyEntered) > 0:
-            return None
+        # if len(alreadyEntered) > 0:
+        #     return Autocompleter.VETO
 
         if justCheck:
             return Autocompleter.DOES_AUTOCOMPLETE
@@ -114,6 +114,14 @@ class EntireSequenceAutocompleter(IAutocompleter):
 
             self._symbol2Autocompletion[key] = autocompletionStringForChild
             autocompletionString += autocompletionStringForChild
+
+        try:
+            idx = autocompletionString.index("${")
+        except ValueError:
+            return autocompletionString
+
+        if len(alreadyEntered) > idx:
+            return Autocompleter.VETO
 
         return autocompletionString
 
