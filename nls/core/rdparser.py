@@ -176,6 +176,7 @@ class RDParser:
         parsedNodeSequence = []
         nParsedMatchers = len(leafSequence.parsedMatchers)
         for i, symbol in enumerate(leafSequence.sequence):
+            # TODO maybe this should not be 0:
             matcher = leafSequence.parsedMatchers[i] if i < nParsedMatchers else Matcher(ParsingState.NOT_PARSED, 0, "")
             pn = self._parsedNodeFactory.createNode(matcher, symbol, None)
             parsedNodeSequence.append(pn)
