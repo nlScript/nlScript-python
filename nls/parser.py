@@ -298,7 +298,7 @@ class Parser:
             if isinstance(typeObject, Join):
                 join = cast(Join, typeObject)
                 if quantifierObject is not None:
-                    join.setCardinality(cast(Range, quantifierObject))
+                    join.cardinality = cast(Range, quantifierObject)
                 return join.tgt.withName(variableName)
 
             symbol = literal(variableName) if typeObject is None else cast(Symbol, typeObject)

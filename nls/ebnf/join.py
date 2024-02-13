@@ -40,6 +40,10 @@ class Join(Rule):
     def cardinality(self) -> Range:
         return self._cardinality
 
+    @cardinality.setter
+    def cardinality(self, value: Range) -> None:
+        self._cardinality = value
+
     @property
     def onlyKeepEntries(self) -> bool:
         return self._onlyKeepEntries
