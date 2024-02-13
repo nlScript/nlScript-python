@@ -21,7 +21,7 @@ from nls.core.named import Named
 
 if TYPE_CHECKING:
     from nls.ebnf.rule import Rule, NamedRule
-    from nls.ebnf.ebnfcore import EBNFCore
+    from nls.ebnf.join import Join
 
 
 class Parser:
@@ -147,6 +147,7 @@ class Parser:
     def entryName(self) -> Rule:
         return self.identifier("entry-name")
 
+    # evaluates to the target grammar's list rule (i.e. Join).
     def list(self) -> Rule:
         g = self._grammar
         ret = g.sequence(
@@ -168,7 +169,7 @@ class Parser:
                 cast(Terminal, entry).withName(identifier) if isinstance(entry, Terminal) else \
                 cast(NonTerminal, entry).withName(identifier)
 
-            return self._targetGrammar.list(None, namedEntry).tgt
+            return self._targetGrammar.list(None, namedEntry)
 
         ret.setEvaluator(Evaluator(evaluate))
         return ret
@@ -281,12 +282,24 @@ class Parser:
         def evaluate(pn: ParsedNode) -> object:
             variableName = str(pn.evaluate("variable-name"))
             typeObject = pn.evaluate("opt-type", "seq-type", "type")
+            quantifierObject = pn.evaluate("opt-quantifier", "seq-quantifier", "quantifier")
+
+            # typeObject is either
+            # - a type (symbol) from the target grammar, or
+            # - a character-class (i.e. a terminal), or
+            # - a tuple (i.e. symbol of the tuple in the target grammar), or
+            # - a list (i.e. a Rule, or more specifically a Join).
+            if isinstance(typeObject, Join):
+                join = cast(Join, typeObject)
+                if quantifierObject is not None:
+                    join.setCardinality(cast(Range, quantifierObject))
+                return join.tgt.withName(variableName)
+
             symbol = literal(variableName) if typeObject is None else cast(Symbol, typeObject)
             namedSymbol = \
                 cast(Terminal, symbol).withName(variableName) if symbol.isTerminal() else \
                 cast(NonTerminal, symbol).withName(variableName)
 
-            quantifierObject = pn.evaluate("opt-quantifier", "seq-quantifier", "quantifier")
             if quantifierObject is not None:
                 range = cast(Range, quantifierObject)
                 if range == STAR:
