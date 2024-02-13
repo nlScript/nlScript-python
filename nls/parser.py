@@ -220,7 +220,13 @@ class Parser:
             "character-class",
             [
                 literal("[").withName(),
-                g.plus(None, characterClass("[^]]").withName()).withName("plus"),
+                g.plus(None,
+                    g.orrule(None,
+                    [
+                        characterClass("[^]]").withName(),
+                        literal("\\]").withName()
+                    ]).withName()
+                ).withName("plus"),
                 literal("]").withName()
             ]
         ).setEvaluator(Evaluator(lambda pn: characterClass(pn.getParsedString())))
