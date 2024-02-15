@@ -12,6 +12,7 @@ from PyQt5.QtGui import QTextCursor, QKeyEvent, QColor, QPalette, QFont
 from PyQt5.QtWidgets import QCompleter, QPlainTextEdit, QApplication, QTextEdit, QItemDelegate, QStyleOptionViewItem, \
     QWidget, QSplitter, QPushButton, QVBoxLayout
 
+from nls.core import graphviz
 from nls.core.autocompletion import Autocompletion
 from nls.core.matcher import Matcher
 from nls.parsednode import ParsedNode
@@ -151,6 +152,7 @@ class ACEditor(QWidget):
         self._beforeRun()
         print("Parsing...")
         pn: ParsedNode = parser.parse(textToEvaluate)
+        print(graphviz.toVizDotLink(pn))
         print("Evaluating...")
         pn.evaluate()
         self._afterRun()
