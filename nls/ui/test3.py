@@ -21,7 +21,7 @@ from nls.parser import Parser
 
 
 class AwesomeTextEdit(QPlainTextEdit):
-    def __init__(self, parser:Parser, parent=None):
+    def __init__(self, parser: Parser, parent=None):
         super(AwesomeTextEdit, self).__init__(parent)
         font = QtGui.QFont()
         font.setFamily("Courier")
@@ -91,7 +91,7 @@ class AwesomeTextEdit(QPlainTextEdit):
             print("parameterChanged(): autocomplete")
             self.autocomplete()
             return
-        self.autocomplete(False) # needed for showing the popup
+        self.autocomplete(False)  # needed for showing the popup
 
     def cancelParameterizedCompletion(self):
         print("cancelParameterizedCompletion")
@@ -185,7 +185,7 @@ class AwesomeTextEdit(QPlainTextEdit):
 
         QPlainTextEdit.keyPressEvent(self, event)
 
-        print("event text = " + event.text());
+        print("event text = " + event.text())
         if len(event.text()) == 0:
             print("Ignoring key event *" + event.text() + "*")
             return
@@ -193,42 +193,42 @@ class AwesomeTextEdit(QPlainTextEdit):
         self.autocomplete()
 
     def autocomplete(self, autoinsertSingleOption: bool = True):
-            # print("cursor position = ", self.textCursor().position())
-            cursor = self.textCursor()
-            cursor.setPosition(cursor.anchor())
-            cr = self.cursorRect(cursor)
+        # print("cursor position = ", self.textCursor().position())
+        cursor = self.textCursor()
+        cursor.setPosition(cursor.anchor())
+        cr = self.cursorRect(cursor)
 
-            # if len(tc.selectedText()) > 0:
-            #     self.completer.setCompletionPrefix(tc.selectedText())
-            textToCursor = self.toPlainText()[0:self.textCursor().anchor()]
-            autocompletions: List[Autocompletion] = []
-            self.parser.parse(textToCursor, autocompletions)
+        # if len(tc.selectedText()) > 0:
+        #     self.completer.setCompletionPrefix(tc.selectedText())
+        textToCursor = self.toPlainText()[0:self.textCursor().anchor()]
+        autocompletions: List[Autocompletion] = []
+        self.parser.parse(textToCursor, autocompletions)
 
-            print("textToCursor = " + textToCursor)
-            print("autocompletions = " + ",".join(map(str, autocompletions)))
+        print("textToCursor = " + textToCursor)
+        print("autocompletions = " + ",".join(map(str, autocompletions)))
 
-            if len(autocompletions) == 1 and autoinsertSingleOption:
-                self.completer.setCompletions(autocompletions)
-                alreadyEntered = autocompletions[0].alreadyEnteredText
-                self.completer.setCompletionPrefix(alreadyEntered)
-                self.insertCompletion(autocompletions[0].completion)
-            elif len(autocompletions) > 1:
-                print(" len > 2")
-                self.completer.setCompletions(autocompletions)
-                alreadyEntered = autocompletions[0].alreadyEnteredText
-                self.completer.setCompletionPrefix(alreadyEntered)
+        if len(autocompletions) == 1 and autoinsertSingleOption:
+            self.completer.setCompletions(autocompletions)
+            alreadyEntered = autocompletions[0].alreadyEnteredText
+            self.completer.setCompletionPrefix(alreadyEntered)
+            self.insertCompletion(autocompletions[0].completion)
+        elif len(autocompletions) > 1:
+            print(" len > 2")
+            self.completer.setCompletions(autocompletions)
+            alreadyEntered = autocompletions[0].alreadyEnteredText
+            self.completer.setCompletionPrefix(alreadyEntered)
 
-                # print("text to cursor = *", self.toPlainText()[0:self.textCursor().position()], "*")
-                popup = self.completer.popup()
-                popup.setCurrentIndex(self.completer.completionModel().index(0, 0))
+            # print("text to cursor = *", self.toPlainText()[0:self.textCursor().position()], "*")
+            popup = self.completer.popup()
+            popup.setCurrentIndex(self.completer.completionModel().index(0, 0))
 
-                cr.setWidth(self.completer.popup().sizeHintForColumn(0)
-                            + self.completer.popup().verticalScrollBar().sizeHint().width())
-                # cr.setWidth(200)
-                print(str(cr))
-                self.completer.complete(cr)
-            else:
-                self.completer.popup().hide()
+            cr.setWidth(self.completer.popup().sizeHintForColumn(0)
+                        + self.completer.popup().verticalScrollBar().sizeHint().width())
+            # cr.setWidth(200)
+            print(str(cr))
+            self.completer.complete(cr)
+        else:
+            self.completer.popup().hide()
 
 
 class MyDelegate(QItemDelegate):
@@ -326,7 +326,7 @@ class Highlight:
 
     # def remove(self):
     #     self._doc.highlights.remove(self)
-    #TODO remove param
+    # TODO remove param
 
     def documentChanged(self, pos: int, charsRemoved: int, charsAdded: int) -> None:
         if charsRemoved > 0:
@@ -423,7 +423,7 @@ class ParameterizedCompletionContext(QObject):
         self._parameters.append(self.addHighlight("", atEnd, atEnd))
 
         self.cycle(0)
-        #self._tc.installEventFilter(self)
+        # self._tc.installEventFilter(self)
 
     def getParametersSize(self):
         return len(self._parameters)
@@ -517,7 +517,7 @@ class ParameterizedCompletionContext(QObject):
 
             elif varName is not None and cha == '}':
                 hlEnd = len(insertString)
-                ret.append(ParsedParam(varName, hlStart, hlEnd)) # hlEnd is exclusive
+                ret.append(ParsedParam(varName, hlStart, hlEnd))  # hlEnd is exclusive
                 varName = None
 
             elif varName is not None:

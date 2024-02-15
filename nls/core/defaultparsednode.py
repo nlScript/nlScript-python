@@ -14,12 +14,12 @@ if TYPE_CHECKING:
 class DefaultParsedNode:
 
     def __init__(self, matcher: Matcher, symbol: Symbol, production: Production):
-        self._parent: DefaultParsedNode = None
+        self._parent: DefaultParsedNode | None = None
         self._children: list[DefaultParsedNode] = []
         self._matcher = matcher
         self._symbol = symbol
         self._production = production
-        self._name: str = None
+        self._name: str | None = None
 
     @property
     def symbol(self) -> Symbol:

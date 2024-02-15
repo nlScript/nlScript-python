@@ -8,10 +8,13 @@ w.place(x=0)
 
 def function1():
     print('function1 activated')
+
+
 # create a menu
-f = Frame(root,width=80,height=60,background='green')
-b2 = Button(f,text='function',command=function1)
+f = Frame(root, width=80, height=60, background='green')
+b2 = Button(f, text='function', command=function1)
 b2.pack()
+
 
 def open_popup(event):
     try:
@@ -22,6 +25,7 @@ def open_popup(event):
     except:
         print("Can't open popup menu")
 
+
 def close_popup(event):
     try:
         f.place_forget()
@@ -29,6 +33,7 @@ def close_popup(event):
         w.unbind_all("<Button-1>")
     except:
         print("Can't close popup menu")
+
 
 w.bind("<Button-3>", open_popup)
 

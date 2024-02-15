@@ -18,10 +18,10 @@ from nls.autocompleter import Autocompleter, DEFAULT_INLINE_AUTOCOMPLETER, Entir
 from nls.parsednode import ParsedNode
 from nls.core.symbol import Symbol
 from nls.core.named import Named
+from nls.ebnf.join import Join
 
 if TYPE_CHECKING:
     from nls.ebnf.rule import Rule, NamedRule
-    from nls.ebnf.join import Join
 
 
 class Parser:
