@@ -324,11 +324,13 @@ class AutocompletionContext(CodeEditor):
             self._errorHighlight.setError(f.pos, f.pos + len(f.parsed))
             return
 
-        if len(autocompletions) == 1 and autoinsertSingleOption:
-            self.completer.setCompletions(autocompletions)
-            alreadyEntered = autocompletions[0].alreadyEnteredText
-            self.completer.setCompletionPrefix(alreadyEntered)
-            self.insertCompletion(autocompletions[0].completion)
+        if len(autocompletions) == 1:
+            completion = autocompletions[0].completion
+            if autoinsertSingleOption or completion.find("${") == -1:
+                self.completer.setCompletions(autocompletions)
+                alreadyEntered = autocompletions[0].alreadyEnteredText
+                self.completer.setCompletionPrefix(alreadyEntered)
+                self.insertCompletion(autocompletions[0].completion)
         elif len(autocompletions) > 1:
             self.completer.setCompletions(autocompletions)
             alreadyEntered = autocompletions[0].alreadyEnteredText
