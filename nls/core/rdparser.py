@@ -226,13 +226,13 @@ def matcherFromChildSequence(children: List[DefaultParsedNode]) -> Matcher:
         matcher = child.matcher
         childState = matcher.state
         if childState != ParsingState.NOT_PARSED:
-            if pos is -1:
+            if pos == -1:
                 pos = matcher.pos  # parent pos is the pos of the first child which is not NOT_PARSED
             if state == ParsingState.NOT_PARSED or not childState.isBetterThan(state):
                 state = childState
         parsed += matcher.parsed
 
-    if pos is -1:
+    if pos == -1:
         pos = 0
     return Matcher(state, pos, parsed)
 
