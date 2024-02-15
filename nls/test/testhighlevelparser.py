@@ -10,7 +10,9 @@ from nls.core.rdparser import RDParser
 from nls.core.terminal import CharacterClass, characterClass, DIGIT, Literal, Terminal
 from nls.ebnf import ebnfparsednodefactory
 from nls.ebnf.ebnf import EBNF
+from nls.ebnf.join import Join
 from nls.ebnf.plus import Plus
+
 from nls.ebnf.repeat import Repeat
 from nls.ebnf.star import Star
 from nls.evaluator import Evaluator
@@ -99,11 +101,11 @@ def testList():
     grammar.compile(hlp.LIST.tgt)
 
     test = "list<int>"
-    list = cast(NonTerminal, evaluateHighlevelParser(hlp, test))
+    list = cast(Join, evaluateHighlevelParser(hlp, test))
 
     # now parse and evaluate the generated grammar:
     tgt = hlp.targetGrammar
-    tgt.compile(list)
+    tgt.compile(list.tgt)
     rdParser = RDParser(tgt.getBNF(), Lexer("1, 2, 3"), ebnfparsednodefactory.INSTANCE)
     pn = rdParser.parse()
     assertEquals(ParsingState.SUCCESSFUL, pn.matcher.state)
@@ -174,11 +176,11 @@ def testType():
     grammar = hlp.grammar
     grammar.compile(hlp.TYPE.tgt)
     test = "list<int>"
-    list = cast(NonTerminal, evaluateHighlevelParser(hlp, test))
+    list = cast(Join, evaluateHighlevelParser(hlp, test))
 
     # now parse and evaluate the generated grammar:
     tgt = hlp.targetGrammar
-    tgt.compile(list)
+    tgt.compile(list.tgt)
     rdParser = RDParser(tgt.getBNF(), Lexer("1, 2, 3"), ebnfparsednodefactory.INSTANCE)
     pn = rdParser.parse()
     print(graphviz.toVizDotLink(pn))
