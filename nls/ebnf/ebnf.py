@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 
 class EBNF(EBNFCore):
+    DIGIT_NAME = "digit"
     LETTER_NAME = "letter"
     SIGN_NAME = "sign"
     INTEGER_NAME = "int"
@@ -30,6 +31,7 @@ class EBNF(EBNFCore):
 
     def __init__(self, other: EBNF = None):
         super().__init__(other)
+        self.DIGIT           = self.makeDigit()          if other is None else other.DIGIT
         self.LETTER          = self.makeLetter()         if other is None else other.LETTER
         self.SIGN            = self.makeSign()           if other is None else other.SIGN
         self.INTEGER         = self.makeInteger()        if other is None else other.INTEGER
@@ -64,6 +66,12 @@ class EBNF(EBNFCore):
 
     def makeLetter(self) -> Rule:
         ret = self.sequence(EBNF.LETTER_NAME, [terminal.LETTER.withName()])
+        ret.setEvaluator(Evaluator(lambda pn: pn.getParsedString()[0]))
+        ret.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
+        return ret
+
+    def makeDigit(self) -> Rule:
+        ret = self.sequence(EBNF.DIGIT_NAME, [terminal.DIGIT.withName()])
         ret.setEvaluator(Evaluator(lambda pn: pn.getParsedString()[0]))
         ret.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
         return ret

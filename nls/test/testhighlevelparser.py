@@ -225,9 +225,9 @@ def testVariable():
     assertEquals(EBNF.INTEGER_NAME, repeat.getEntry().symbol)
 
     test = "{blubb:digit}"
-    evaluatedTerminal = cast(Named[Terminal], evaluateHighlevelParser(hlp, test))
-    assertEquals("blubb", evaluatedTerminal.name)
-    assertEquals(DIGIT, evaluatedTerminal.getSymbol())
+    evaluatedNonTerminal = cast(Named[NonTerminal], evaluateHighlevelParser(hlp, test))
+    assertEquals("blubb", evaluatedNonTerminal.name)
+    assertEquals(EBNF.DIGIT_NAME, evaluatedNonTerminal.getSymbol().symbol)
 
     test = "{blubb:int:*}"
     evaluatedNonTerminal = cast(Named[NonTerminal], evaluateHighlevelParser(hlp, test))
