@@ -28,7 +28,17 @@ class DefaultEvaluator(IEvaluator):
 
 class AllChildrenEvaluator(IEvaluator):
     def evaluate(self, pn: ParsedNode) -> object:
-        return list(map(lambda ch: ch.evaluate(), pn.children))
+        if len(pn.children) == 0:
+            return list()
+
+        ret = list(map(lambda ch: ch.evaluate(), pn.children))
+
+        allAreCharacters = all(map(lambda x: isinstance(x, str) and len(x) == 1, ret))
+
+        if not allAreCharacters:
+            return ret
+
+        return "".join(ret)
 
 
 class FirstChildEvaluator(IEvaluator):

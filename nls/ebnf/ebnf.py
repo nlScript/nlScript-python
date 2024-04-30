@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING
 
 from nls.autocompleter import DEFAULT_INLINE_AUTOCOMPLETER, IfNothingYetEnteredAutocompleter, \
     EntireSequenceAutocompleter, PATH_AUTOCOMPLETER
-from nls.core.terminal import literal, DIGIT, WHITESPACE, characterClass
+from nls.core.terminal import literal
+import nls.core.terminal as terminal
 from nls.ebnf.ebnfcore import EBNFCore
 from nls.evaluator import Evaluator, DEFAULT_EVALUATOR
 from nls.util.range import Range
@@ -16,6 +17,7 @@ if TYPE_CHECKING:
 
 
 class EBNF(EBNFCore):
+    LETTER_NAME = "letter"
     SIGN_NAME = "sign"
     INTEGER_NAME = "int"
     FLOAT_NAME = "float"
@@ -28,6 +30,7 @@ class EBNF(EBNFCore):
 
     def __init__(self, other: EBNF = None):
         super().__init__(other)
+        self.LETTER          = self.makeLetter()         if other is None else other.LETTER
         self.SIGN            = self.makeSign()           if other is None else other.SIGN
         self.INTEGER         = self.makeInteger()        if other is None else other.INTEGER
         self.FLOAT           = self.makeFloat()          if other is None else other.FLOAT
@@ -53,9 +56,15 @@ class EBNF(EBNFCore):
         # int -> (-|+)?digit+
         ret = self.sequence(EBNF.INTEGER_NAME, [
                             self.optional(None, self.SIGN.withName("sign")).withName("optional"),
-                            self.plus(None, DIGIT.withName("digit")).withName("plus")])
+                            self.plus(None, terminal.DIGIT.withName("digit")).withName("plus")])
 
         ret.setEvaluator(Evaluator(lambda pn: int(pn.getParsedString())))
+        ret.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
+        return ret
+
+    def makeLetter(self) -> Rule:
+        ret = self.sequence(EBNF.LETTER_NAME, [terminal.LETTER.withName()])
+        ret.setEvaluator(Evaluator(lambda pn: pn.getParsedString()[0]))
         ret.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
         return ret
 
@@ -64,14 +73,14 @@ class EBNF(EBNFCore):
         ret = self.sequence(EBNF.FLOAT_NAME,
                             [
                                 self.optional(None, self.SIGN.withName()).withName(),
-                                self.plus(None, DIGIT.withName()).withName(),
+                                self.plus(None, terminal.DIGIT.withName()).withName(),
                                 self.optional(
                                     None,
                                     self.sequence(
                                         None,
                                         [
                                             literal(".").withName(),
-                                            self.star(None, DIGIT.withName()).withName("star")
+                                            self.star(None, terminal.DIGIT.withName()).withName("star")
                                         ]).withName("sequence")
                                   ).withName()
                             ])
@@ -81,12 +90,12 @@ class EBNF(EBNFCore):
         return ret
 
     def makeWhitespaceStar(self) -> Rule:
-        ret = self.star(EBNF.WHITESPACE_STAR_NAME, WHITESPACE.withName())
+        ret = self.star(EBNF.WHITESPACE_STAR_NAME, terminal.WHITESPACE.withName())
         ret.setAutocompleter(IfNothingYetEnteredAutocompleter(" "))
         return ret
 
     def makeWhitespacePlus(self) -> Rule:
-        ret = self.plus(EBNF.WHITESPACE_PLUS_NAME, WHITESPACE.withName())
+        ret = self.plus(EBNF.WHITESPACE_PLUS_NAME, terminal.WHITESPACE.withName())
         ret.setAutocompleter(IfNothingYetEnteredAutocompleter(" "))
         return ret
 
@@ -152,18 +161,18 @@ class EBNF(EBNFCore):
 
     def makeTime(self) -> Rule:
         ret = self.sequence(self.TIME_NAME, [
-                            self.optional(None, DIGIT.withName()).withName(),
-                            DIGIT.withName(),
+                            self.optional(None, terminal.DIGIT.withName()).withName(),
+                            terminal.DIGIT.withName(),
                             literal(":").withName(),
-                            DIGIT.withName(),
-                            DIGIT.withName()
+                            terminal.DIGIT.withName(),
+                            terminal.DIGIT.withName()
                             ])
         ret.setEvaluator(Evaluator(lambda pn: datetime.datetime.strptime(pn.getParsedString(), '%H:%M').time()))
         ret.setAutocompleter(IfNothingYetEnteredAutocompleter("${HH}:${MM}"))
         return ret
 
     def makePath(self) -> Rule:
-        innerPath = self.plus(None, characterClass("[^'<>|?*\n]").withName("inner-path"))
+        innerPath = self.plus(None, terminal.characterClass("[^'<>|?*\n]").withName("inner-path"))
         innerPath.setEvaluator(DEFAULT_EVALUATOR)
         innerPath.setAutocompleter(PATH_AUTOCOMPLETER)
 
