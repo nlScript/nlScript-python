@@ -78,8 +78,8 @@ class EntireSequenceAutocompleter(IAutocompleter):
         # if len(alreadyEntered) > 0:
         #     return Autocompleter.VETO
 
-        if justCheck:
-            return Autocompleter.DOES_AUTOCOMPLETE
+        # if justCheck:
+        #     return Autocompleter.DOES_AUTOCOMPLETE
 
         autocompletionString = ""
         sequence = pn.getRule()
@@ -121,7 +121,7 @@ class EntireSequenceAutocompleter(IAutocompleter):
             return autocompletionString
 
         if len(alreadyEntered) > idx:
-            return Autocompleter.VETO
+            return None
 
         return autocompletionString
 
