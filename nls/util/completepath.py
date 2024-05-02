@@ -39,10 +39,10 @@ class CompletePath:
 
     @staticmethod
     def getChild(alreadyEntered: str) -> str:
-        parent = CompletePath.getParent(alreadyEntered)
+        parent: str | None = CompletePath.getParent(alreadyEntered)
         if parent is None:
             return alreadyEntered
-        if os.path.samefile(parent, alreadyEntered):
+        if os.path.exists(alreadyEntered) and os.path.samefile(parent, alreadyEntered):
             return ""
         rel = os.path.relpath(alreadyEntered, parent)
         return rel
