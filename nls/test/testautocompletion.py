@@ -157,6 +157,10 @@ def test07():
     assertEquals(1, len(autocompletions))
     assertEquals("385nm", autocompletions[0].completion)
 
+    autocompletions.clear()
+    root = parser.parse("Excite with 10% at ", autocompletions)
+    print("autocompletions: " + str([a.completion for a in autocompletions]))
+
 
 def test08():
     parser = Parser()

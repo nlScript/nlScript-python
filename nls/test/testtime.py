@@ -3,10 +3,13 @@ from __future__ import annotations
 import datetime
 from typing import cast
 
+from PyQt5.QtWidgets import QApplication
+
 from nls.core.parsingstate import ParsingState
 from nls.evaluator import Evaluator
 from nls.parsednode import ParsedNode
 from nls.parser import Parser
+from nls.ui.ui import ACEditor
 
 
 def test01():
@@ -25,6 +28,15 @@ def test01():
     root.evaluate()
 
 
+def interactive():
+    hlp = Parser()
+    hlp.defineSentence("The pizza comes at {t:time}.", None)
+    app = QApplication([])
+    te = ACEditor(hlp)
+    te.show()
+    exit(app.exec_())
+
+
 def assertEquals(exp, real):
     if exp != real:
         raise Exception("Expected " + str(exp) + ", but got " + str(real))
@@ -37,3 +49,4 @@ def assertNotEquals(exp, real):
 
 if __name__ == "__main__":
     test01()
+    interactive()
