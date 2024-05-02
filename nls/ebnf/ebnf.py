@@ -30,6 +30,7 @@ class EBNF(EBNFCore):
     PATH_NAME = "path"
     TIME_NAME = "time"
     DATE_NAME = "date"
+    DATETIME_NAME = "date-time"
     COLOR_NAME = "color"
 
     def __init__(self, other: EBNF = None):
@@ -47,6 +48,7 @@ class EBNF(EBNFCore):
         self.PATH            = self.makePath()           if other is None else other.PATH
         self.TIME            = self.makeTime()           if other is None else other.TIME
         self.DATE            = self.makeDate()           if other is None else other.DATE
+        self.DATETIME        = self.makeDatetime()       if other is None else other.DATETIME
         self.COLOR           = self.makeColor()          if other is None else other.COLOR
 
     @staticmethod
@@ -68,6 +70,22 @@ class EBNF(EBNFCore):
 
         ret.setEvaluator(Evaluator(lambda pn: int(pn.getParsedString())))
         ret.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
+        return ret
+
+    def makeDatetime(self) -> Rule:
+        ret: Rule = self.sequence(self.DATETIME_NAME, [
+            self.DATE.withName("date"),
+            literal(" ").withName(),
+            self.TIME.withName("time")
+        ])
+
+        def evaluate(pn: ParsedNode) -> object:
+            date = pn.evaluate("date")
+            time = pn.evaluate("time")
+            return datetime.datetime.combine(date, time)
+
+        ret.setEvaluator(Evaluator(evaluate))
+        ret.setAutocompleter(IfNothingYetEnteredAutocompleter("${Day} ${Month} ${Year} ${HH}:${MM}"))
         return ret
 
     def makeLetter(self) -> Rule:
