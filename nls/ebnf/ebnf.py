@@ -4,7 +4,7 @@ import datetime
 from typing import TYPE_CHECKING
 
 from nls.autocompleter import DEFAULT_INLINE_AUTOCOMPLETER, IfNothingYetEnteredAutocompleter, \
-    EntireSequenceAutocompleter, PATH_AUTOCOMPLETER
+    EntireSequenceAutocompleter, PATH_AUTOCOMPLETER, Autocompleter
 from nls.core.terminal import literal
 import nls.core.terminal as terminal
 from nls.ebnf.ebnfcore import EBNFCore
@@ -29,6 +29,7 @@ class EBNF(EBNFCore):
     INTEGER_RANGE_NAME = "integer-range"
     PATH_NAME = "path"
     TIME_NAME = "time"
+    DATE_NAME = "date"
     COLOR_NAME = "color"
 
     def __init__(self, other: EBNF = None):
@@ -45,6 +46,7 @@ class EBNF(EBNFCore):
         self.INTEGER_RANGE   = self.makeIntegerRange()   if other is None else other.INTEGER_RANGE
         self.PATH            = self.makePath()           if other is None else other.PATH
         self.TIME            = self.makeTime()           if other is None else other.TIME
+        self.DATE            = self.makeDate()           if other is None else other.DATE
         self.COLOR           = self.makeColor()          if other is None else other.COLOR
 
     @staticmethod
@@ -209,6 +211,32 @@ class EBNF(EBNFCore):
             self.sequence(None, [literal("Saturday") .withName()]).setEvaluator(Evaluator(lambda pn: 5)) .withName("saturday"),
             self.sequence(None, [literal("Sunday")   .withName()]).setEvaluator(Evaluator(lambda pn: 6)) .withName("sunday")
         ])
+
+    def makeDate(self) -> Rule:
+        day: Rule = self.sequence(None, [
+            terminal.DIGIT.withName(),
+            terminal.DIGIT.withName()
+        ])
+        day.setAutocompleter(Autocompleter(lambda pn, justCheck: Autocompleter.VETO if len(pn.getParsedString()) > 0 else "${day}"))
+
+        year: Rule = self.sequence(None, [
+            terminal.DIGIT.withName(),
+            terminal.DIGIT.withName(),
+            terminal.DIGIT.withName(),
+            terminal.DIGIT.withName(),
+        ])
+
+        ret: Rule = self.sequence(self.DATE_NAME, [
+            day.withName("day"),
+            literal(" ").withName(),
+            self.MONTH.withName("month"),
+            literal(" ").withName(),
+            year.withName("year")
+        ])
+
+        ret.setEvaluator(Evaluator(lambda pn: datetime.datetime.strptime(pn.getParsedString(), "%d %B %Y").date()))
+        ret.setAutocompleter(EntireSequenceAutocompleter(self, dict()))
+        return ret
 
     def makePath(self) -> Rule:
         innerPath = self.plus(None, terminal.characterClass("[^'<>|?*\n]").withName("inner-path"))
