@@ -22,6 +22,7 @@ class EBNF(EBNFCore):
     SIGN_NAME = "sign"
     INTEGER_NAME = "int"
     FLOAT_NAME = "float"
+    MONTH_NAME = "month"
     WHITESPACE_STAR_NAME = "whitespace-star"
     WHITESPACE_PLUS_NAME = "whitespace-plus"
     INTEGER_RANGE_NAME = "integer-range"
@@ -36,6 +37,7 @@ class EBNF(EBNFCore):
         self.SIGN            = self.makeSign()           if other is None else other.SIGN
         self.INTEGER         = self.makeInteger()        if other is None else other.INTEGER
         self.FLOAT           = self.makeFloat()          if other is None else other.FLOAT
+        self.MONTH           = self.makeMonth()          if other is None else other.MONTH
         self.WHITESPACE_STAR = self.makeWhitespaceStar() if other is None else other.WHITESPACE_STAR
         self.WHITESPACE_PLUS = self.makeWhitespacePlus() if other is None else other.WHITESPACE_PLUS
         self.INTEGER_RANGE   = self.makeIntegerRange()   if other is None else other.INTEGER_RANGE
@@ -178,6 +180,22 @@ class EBNF(EBNFCore):
         ret.setEvaluator(Evaluator(lambda pn: datetime.datetime.strptime(pn.getParsedString(), '%H:%M').time()))
         ret.setAutocompleter(IfNothingYetEnteredAutocompleter("${HH}:${MM}"))
         return ret
+
+    def makeMonth(self) -> Rule:
+        return self.orrule(self.MONTH_NAME, [
+            self.sequence(None, [literal("January")  .withName()]).setEvaluator(Evaluator(lambda pn: 0)).withName("january"),
+            self.sequence(None, [literal("February") .withName()]).setEvaluator(Evaluator(lambda pn: 1)).withName("february"),
+            self.sequence(None, [literal("March")    .withName()]).setEvaluator(Evaluator(lambda pn: 2)).withName("march"),
+            self.sequence(None, [literal("April")    .withName()]).setEvaluator(Evaluator(lambda pn: 3)).withName("april"),
+            self.sequence(None, [literal("Mai")      .withName()]).setEvaluator(Evaluator(lambda pn: 4)).withName("mai"),
+            self.sequence(None, [literal("June")     .withName()]).setEvaluator(Evaluator(lambda pn: 5)).withName("june"),
+            self.sequence(None, [literal("July")     .withName()]).setEvaluator(Evaluator(lambda pn: 6)).withName("july"),
+            self.sequence(None, [literal("August")   .withName()]).setEvaluator(Evaluator(lambda pn: 7)).withName("august"),
+            self.sequence(None, [literal("September").withName()]).setEvaluator(Evaluator(lambda pn: 8)).withName("september"),
+            self.sequence(None, [literal("October")  .withName()]).setEvaluator(Evaluator(lambda pn: 9)).withName("october"),
+            self.sequence(None, [literal("November") .withName()]).setEvaluator(Evaluator(lambda pn: 10)).withName("november"),
+            self.sequence(None, [literal("December") .withName()]).setEvaluator(Evaluator(lambda pn: 110)).withName("december"),
+        ])
 
     def makePath(self) -> Rule:
         innerPath = self.plus(None, terminal.characterClass("[^'<>|?*\n]").withName("inner-path"))
