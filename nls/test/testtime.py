@@ -17,13 +17,13 @@ def test01():
 
     def evaluate(pn: ParsedNode) -> object:
         p = cast(datetime.time, pn.evaluate("t"))
-        assertEquals(9, p.hour)
+        assertEquals(20, p.hour)
         assertEquals(30, p.minute)
         return None
 
     hlp.defineSentence("The pizza comes at {t:time}.", Evaluator(evaluate))
 
-    root = hlp.parse("The pizza comes at 9:30.", None)
+    root = hlp.parse("The pizza comes at 20:30.", None)
     assertEquals(ParsingState.SUCCESSFUL, root.matcher.state)
     root.evaluate()
 

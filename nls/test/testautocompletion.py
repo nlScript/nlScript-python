@@ -13,6 +13,7 @@ from nls.ebnf import ebnfparsednodefactory
 from nls.ebnf.ebnfcore import EBNFCore
 from nls.ebnf.ebnfparser import ParseStartListener
 from nls.ebnf.parselistener import ParseListener
+from nls.evaluator import Evaluator
 from nls.parsednode import ParsedNode
 from nls.parser import Parser
 
@@ -40,7 +41,7 @@ def test02():
     autocompletions: List[Autocompletion] = []
     parser.parse("The first digit of the number is ", autocompletions)
     assertEquals(1, len(autocompletions))
-    assertEquals(Autocompletion("${first}", ""), autocompletions[0])
+    assertEquals("${first}", autocompletions[0].getCompletion())
 
 
 def test03():
@@ -49,7 +50,7 @@ def test03():
     autocompletions: List[Autocompletion] = []
     parser.parse("", autocompletions)
     assertEquals(2, len(autocompletions))
-    assertEquals(Autocompletion("Define the output path", ""), autocompletions[1])
+    assertEquals("Define the output path", autocompletions[1].getCompletion())
 
 
 def test04():
@@ -83,7 +84,7 @@ def test05():
 
     parser.defineType("defined-channels", "'{channel:[A-Za-z0-9]:+}'",
             None,
-            Autocompleter(lambda pn, justCheck: ";;;".join(definedChannels)))
+            Autocompleter(lambda pn, justCheck: Autocompletion.literal(pn, definedChannels)))
 
     parser.defineSentence("Use channel {channel:defined-channels}.", None)
 
@@ -97,12 +98,9 @@ def test05():
     print(graphviz.toVizDotLink(root))
     assertEquals(ParsingState.END_OF_INPUT, root.matcher.state)
 
-    expected: List[Autocompletion] = [
-        Autocompletion("DAPI", ""),
-        Autocompletion("A488", "")
-    ]
+    expected: List[str] = ["DAPI", "A488"]
 
-    assertEquals(expected, autocompletions)
+    assertEquals(expected, [a.getCompletion() for a in autocompletions])
 
 
 def test06():
@@ -133,16 +131,16 @@ def test06():
     print(pn.matcher.state)
     assertEquals(ParsingState.END_OF_INPUT, pn.matcher.state)
     assertEquals(1, len(autocompletions))
-    assertEquals("Define channel", autocompletions[0].completion)
+    assertEquals("Define channel", autocompletions[0].getCompletion())
 
 
 def test07():
     parser = Parser()
 
-    parser.defineType("led", "385nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: "385nm"))
-    parser.defineType("led", "470nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: "470nm"))
-    parser.defineType("led", "567nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: "567nm"))
-    parser.defineType("led", "625nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: "625nm"))
+    parser.defineType("led", "385nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: Autocompletion.literal(e, ["385nm"])))
+    parser.defineType("led", "470nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: Autocompletion.literal(e, ["470nm"])))
+    parser.defineType("led", "567nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: Autocompletion.literal(e, ["567nm"])))
+    parser.defineType("led", "625nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: Autocompletion.literal(e, ["625nm"])))
 
     parser.defineType("led-power", "{<led-power>:int}%", evaluator=None, autocompleter=True)
     parser.defineType("led-setting", "{led-power:led-power} at {wavelength:led}", None, True)
@@ -155,11 +153,11 @@ def test07():
     root = parser.parse("Excite with 10% at 3", autocompletions)
     assertEquals(ParsingState.END_OF_INPUT, root.matcher.state)
     assertEquals(1, len(autocompletions))
-    assertEquals("385nm", autocompletions[0].completion)
+    assertEquals("385nm", autocompletions[0].getCompletion())
 
     autocompletions.clear()
     root = parser.parse("Excite with 10% at ", autocompletions)
-    print("autocompletions: " + str([a.completion for a in autocompletions]))
+    print("autocompletions: " + str([a.getCompletion() for a in autocompletions]))
 
 
 def test08():
@@ -173,9 +171,25 @@ def test08():
     root = parser.parse("My favorite color is ", autocompletions)
     assertEquals(ParsingState.END_OF_INPUT, root.matcher.state)
     assertEquals(3, len(autocompletions))
-    assertEquals("blue", autocompletions[0].completion)
-    assertEquals("green", autocompletions[1].completion)
-    assertEquals("(${r}, ${g}, ${b})", autocompletions[2].completion)
+    assertEquals("blue", autocompletions[0].getCompletion())
+    assertEquals("green", autocompletions[1].getCompletion())
+    assertEquals("(${r}, ${g}, ${b})", autocompletions[2].getCompletion())
+
+
+def test09():
+    parser = Parser()
+    parser.defineType("channel-name", "'{<name>:[A-Za-z0-9]:+}'",
+                      Evaluator(lambda e: e.getParsedString("<name>")),
+                      True)
+
+    parser.defineSentence(
+        "Define channel {channel-name:channel-name}.",
+        None)
+
+    autocompletions: List[Autocompletion] = []
+    root: ParsedNode = parser.parse("Define channel 'D", autocompletions)
+
+    print("autocompletions = " + str([ac.getCompletion() for ac in autocompletions]))
 
 
 def test(inp: str, expectedCompletion: List[str]) -> None:
@@ -195,14 +209,14 @@ def test(inp: str, expectedCompletion: List[str]) -> None:
 
 
 def getCompletionStrings(autocompletions: List[Autocompletion]) -> List[str]:
-    return list(map(lambda ac: ac.completion + " (" + ac.alreadyEnteredText + ")", autocompletions))
+    return list(map(lambda ac: ac.getCompletion() + " (" + ac.getAlreadyEnteredText() + ")", autocompletions))
 
 
 def makeGrammar() -> BNF:
-    def getAutocompletion(pn: ParsedNode, justCheck: bool) -> str or None:
+    def getAutocompletion(pn: ParsedNode, justCheck: bool) -> List[Autocompletion] or None:
         if len(pn.getParsedString()) > 0:
-            return Autocompleter.VETO
-        return "${" + pn.name + "}"
+            return Autocompletion.veto(pn)
+        return Autocompletion.parameterized(pn, pn.name)
     grammar = EBNFCore()
     e = grammar.sequence("expr", [
             literal("one").withName(),

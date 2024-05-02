@@ -7,10 +7,12 @@ from nls.core.parsingstate import ParsingState
 from nls.ebnf.ebnfproduction import EBNFProduction
 
 if TYPE_CHECKING:
+    from typing import List
     from nls.core.matcher import Matcher
     from nls.core.symbol import Symbol
     from nls.core.production import Production
     from nls.ebnf.rule import Rule
+    from nls.core.autocompletion import Autocompletion
 
 
 class ParsedNode(DefaultParsedNode):
@@ -44,7 +46,7 @@ class ParsedNode(DefaultParsedNode):
             return False
         return thisRule == parentRule
 
-    def getAutocompletion(self, justCheck: bool) -> str or None:
+    def getAutocompletion(self, justCheck: bool) -> List[Autocompletion] or None:
         rule = self.getRule()
         if rule is not None and rule.getAutocompleter() is not None and not self.parentHasSameRule():
             return rule.getAutocompleter().getAutocompletion(self, justCheck)

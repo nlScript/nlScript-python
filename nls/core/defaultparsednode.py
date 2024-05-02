@@ -6,9 +6,11 @@ from nls.core.terminal import Terminal, Literal
 
 
 if TYPE_CHECKING:
+    from typing import List
     from nls.core.production import Production
     from nls.core.matcher import Matcher
     from nls.core.symbol import Symbol
+    from nls.core.autocompletion import Autocompletion
 
 
 class DefaultParsedNode:
@@ -44,20 +46,21 @@ class DefaultParsedNode:
     def doesAutocomplete(self) -> bool:
         return self.getAutocompletion(True) is not None
 
-    def getAutocompletion(self, justCheck: bool) -> str or None:
+    def getAutocompletion(self, justCheck: bool) -> List[Autocompletion] or None:
         if self._symbol is None:
             return None
 
+        from nls.core.autocompletion import Autocompletion
+
         if isinstance(self._symbol, Literal):
-            return self._symbol.symbol
+            return Autocompletion.literal(self, [self._symbol.symbol])
 
         name: str = self.name
         if name == Named.UNNAMED:
             name = self.symbol.symbol
 
         if isinstance(self._symbol, Terminal):
-            from nls.autocompleter import IAutocompleter
-            return IAutocompleter.VETO if len(self.getParsedString()) > 0 else "${" + name + "}"
+            return Autocompletion.veto(self) if len(self.getParsedString()) > 0 else Autocompletion.parameterized(self, name)
 
         return None
 
@@ -65,7 +68,7 @@ class DefaultParsedNode:
         return len(self._children)
 
     @property
-    def children(self) -> list:
+    def children(self) -> list[DefaultParsedNode]:
         return self._children
 
     def getChildByIndex(self, i: int) -> DefaultParsedNode or None:
@@ -77,7 +80,7 @@ class DefaultParsedNode:
                 return n
         return None
 
-    def getChild(self, arg: int or str):
+    def getChild(self, arg: int or str) -> DefaultParsedNode or None:
         if isinstance(arg, int):
             return self.getChildByIndex(arg)
         else:

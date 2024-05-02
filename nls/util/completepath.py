@@ -58,7 +58,6 @@ class CompletePath:
 
     @staticmethod
     def getSiblings(alreadyEntered: str) -> List[str]:
-        print("getSiblings(" + alreadyEntered + ")")
         parent = CompletePath.getParent(alreadyEntered)
         child = CompletePath.getChild(alreadyEntered)
 
@@ -81,9 +80,9 @@ class CompletePath:
         return path if path.endswith(os.path.sep) else path + os.path.sep
 
     @staticmethod
-    def getCompletion(alreadyEntered: str) -> str:
+    def getCompletion(alreadyEntered: str) -> List[str]:
         siblings = CompletePath.getSiblings(alreadyEntered)
-        return alreadyEntered if len(siblings) == 0 else ";;;".join(siblings)
+        return [alreadyEntered] if len(siblings) == 0 else siblings
 
 
 class PathWrapper:

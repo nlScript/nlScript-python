@@ -3,8 +3,9 @@ from __future__ import annotations
 import datetime
 from typing import TYPE_CHECKING
 
-from nls.autocompleter import DEFAULT_INLINE_AUTOCOMPLETER, IfNothingYetEnteredAutocompleter, \
+from nls.autocompleter import DEFAULT_INLINE_AUTOCOMPLETER, \
     EntireSequenceAutocompleter, PATH_AUTOCOMPLETER, Autocompleter
+from nls.core.autocompletion import Autocompletion
 from nls.core.terminal import literal
 import nls.core.terminal as terminal
 from nls.ebnf.ebnfcore import EBNFCore
@@ -85,7 +86,7 @@ class EBNF(EBNFCore):
             return datetime.datetime.combine(date, time)
 
         ret.setEvaluator(Evaluator(evaluate))
-        ret.setAutocompleter(IfNothingYetEnteredAutocompleter("${Day} ${Month} ${Year} ${HH}:${MM}"))
+        ret.setAutocompleter(EntireSequenceAutocompleter(self, {}))
         return ret
 
     def makeLetter(self) -> Rule:
@@ -123,12 +124,12 @@ class EBNF(EBNFCore):
 
     def makeWhitespaceStar(self) -> Rule:
         ret = self.star(EBNF.WHITESPACE_STAR_NAME, terminal.WHITESPACE.withName())
-        ret.setAutocompleter(IfNothingYetEnteredAutocompleter(" "))
+        ret.setAutocompleter(Autocompleter(lambda pn, justCheck: Autocompletion.literal(pn, [" "] if len(pn.getParsedString()) == 0 else [""])))
         return ret
 
     def makeWhitespacePlus(self) -> Rule:
         ret = self.plus(EBNF.WHITESPACE_PLUS_NAME, terminal.WHITESPACE.withName())
-        ret.setAutocompleter(IfNothingYetEnteredAutocompleter(" "))
+        ret.setAutocompleter(Autocompleter(lambda pn, justCheck: Autocompletion.literal(pn, [" "] if len(pn.getParsedString()) == 0 else [""])))
         return ret
 
     def makeIntegerRange(self) -> Rule:
@@ -192,15 +193,25 @@ class EBNF(EBNFCore):
         return (0xff << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff)
 
     def makeTime(self) -> Rule:
-        ret = self.sequence(self.TIME_NAME, [
+        hour: Rule = self.sequence(None, [
                             self.optional(None, terminal.DIGIT.withName()).withName(),
                             terminal.DIGIT.withName(),
-                            literal(":").withName(),
+        ])
+        hour.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
+
+        minute = self.sequence(None, [
                             terminal.DIGIT.withName(),
                             terminal.DIGIT.withName()
-                            ])
+        ])
+        minute.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
+
+        ret: Rule = self.sequence(self.TIME_NAME, [
+            hour.withName("HH"),
+            literal(":").withName(),
+            minute.withName("MM")
+        ])
         ret.setEvaluator(Evaluator(lambda pn: datetime.datetime.strptime(pn.getParsedString(), '%H:%M').time()))
-        ret.setAutocompleter(IfNothingYetEnteredAutocompleter("${HH}:${MM}"))
+        ret.setAutocompleter(EntireSequenceAutocompleter(self, {}))
         return ret
 
     def makeMonth(self) -> Rule:
@@ -232,10 +243,10 @@ class EBNF(EBNFCore):
 
     def makeDate(self) -> Rule:
         day: Rule = self.sequence(None, [
-            terminal.DIGIT.withName(),
+            self.optional(None, terminal.DIGIT.withName()).withName(),
             terminal.DIGIT.withName()
         ])
-        day.setAutocompleter(Autocompleter(lambda pn, justCheck: Autocompleter.VETO if len(pn.getParsedString()) > 0 else "${day}"))
+        day.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
 
         year: Rule = self.sequence(None, [
             terminal.DIGIT.withName(),
@@ -243,6 +254,7 @@ class EBNF(EBNFCore):
             terminal.DIGIT.withName(),
             terminal.DIGIT.withName(),
         ])
+        year.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
 
         ret: Rule = self.sequence(self.DATE_NAME, [
             day.withName("day"),

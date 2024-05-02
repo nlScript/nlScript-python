@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Callable, List, Dict
 
 from abc import ABC, abstractmethod
 
-from nls.core.autocompletion import Autocompletion
+from nls.core.autocompletion import Autocompletion, EntireSequence
 from nls.core.bnf import BNF
 from nls.core.lexer import Lexer
 from nls.core.production import Production
@@ -19,78 +19,54 @@ if TYPE_CHECKING:
 
 
 class IAutocompleter(ABC):
-    VETO = "VETO"
-
-    DOES_AUTOCOMPLETE = "DOES_AUTOCOMPLETE"
-
     @abstractmethod
-    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
+    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> List[Autocompletion] or None:
         pass
 
 
 class Autocompleter(IAutocompleter):
-    def __init__(self, getAutocompletion: Callable[[ParsedNode, bool], str]):
+    def __init__(self, getAutocompletion: Callable[[ParsedNode, bool], List[Autocompletion]]):
         self._getAutocompletion = getAutocompletion
 
-    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
+    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> List[Autocompletion] or None:
         return self._getAutocompletion(pn, justCheck)
 
 
-class IfNothingYetEnteredAutocompleter(IAutocompleter):
-    def __init__(self, completion: str):
-        self._completion = completion
-
-    # override abstract method
-    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
-        return self._completion if len(pn.getParsedString()) == 0 else ""
-
-
 class DefaultInlineAutocompleter(IAutocompleter):
-    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
+    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> List[Autocompletion] or None:
         alreadyEntered = pn.getParsedString()
         if len(alreadyEntered) > 0:
-            return IAutocompleter.VETO
+            return Autocompletion.veto(pn)
         name = pn.name
-        if name is not None:
-            return "${" + name + "}"
-        name = pn.symbol.symbol
-        if name is not None:
-            return "${" + name + "}"
-        return None
-
-
-class EmptyAutocompleter(IAutocompleter):
-    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
-        return ""
+        if name is None:
+            name = pn.symbol.symbol
+        if name is None:
+            return None
+        return Autocompletion.parameterized(pn, name)
 
 
 class EntireSequenceAutocompleter(IAutocompleter):
     calledNTimes = 0
 
-    def __init__(self, ebnf: EBNFCore, symbol2Autocompletion: Dict[str, str]):
+    def __init__(self, ebnf: EBNFCore, symbol2Autocompletion: Dict[str, List[Autocompletion]]):
         self._ebnf = ebnf
         self._symbol2Autocompletion = symbol2Autocompletion
 
-    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
+    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> List[Autocompletion] or None:
         EntireSequenceAutocompleter.calledNTimes += 1
         import nls.core.rdparser
         alreadyEntered = pn.getParsedString()
-        # if len(alreadyEntered) > 0:
-        #     return Autocompleter.VETO
 
-        # if justCheck:
-        #     return Autocompleter.DOES_AUTOCOMPLETE
-
-        autocompletionString = ""
         sequence = pn.getRule()
         children: List[Symbol] = sequence.children
 
+        entireSequenceCompletion = EntireSequence(pn)
+
         for idx, child in enumerate(children):
             key = child.symbol + ":" + sequence.getNameForChild(idx)
-            autocompletionStringForChild = None
             try:
-                autocompletionStringForChild = self._symbol2Autocompletion[key]
-                autocompletionString += autocompletionStringForChild
+                autocompletionsForChild = self._symbol2Autocompletion[key]
+                entireSequenceCompletion.add(autocompletionsForChild)
                 continue
             except KeyError:
                 pass
@@ -104,42 +80,35 @@ class EntireSequenceAutocompleter(IAutocompleter):
             bnf.addProduction(Production(BNF.ARTIFICIAL_START_SYMBOL, [newSequence.tgt]))
             parser = nls.core.rdparser.RDParser(bnf, Lexer(""), ebnfparsednodefactory.INSTANCE)
 
-            autocompletions: List[Autocompletion] = []
-            parser.parse(autocompletions)
-            nA = len(autocompletions)
-            if nA > 1:
-                autocompletionStringForChild = "${" + sequence.getNameForChild(idx) + "}"
-            elif nA == 1:
-                autocompletionStringForChild = autocompletions[0].completion
+            autocompletionsForChild = []
+            parser.parse(autocompletionsForChild)
 
-            self._symbol2Autocompletion[key] = autocompletionStringForChild
-            autocompletionString += autocompletionStringForChild
+            self._symbol2Autocompletion[key] = autocompletionsForChild
+            entireSequenceCompletion.add(autocompletionsForChild)
 
         try:
-            idx = autocompletionString.index("${")
+            idx = entireSequenceCompletion.getCompletion().index("${")
         except ValueError:
-            return autocompletionString
+            return entireSequenceCompletion.asArray()
 
         if len(alreadyEntered) > idx:
             return None
 
-        return autocompletionString
+        return entireSequenceCompletion.asArray()
 
 
 class PathAutocompleter(IAutocompleter):
     def __init__(self):
         pass
 
-    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> str or None:
+    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> List[Autocompletion] or None:
         if justCheck:
-            return Autocompleter.DOES_AUTOCOMPLETE
-        return CompletePath.getCompletion(pn.getParsedString())
+            return Autocompletion.doesAutocomplete(pn)
+        completion: List[str] = CompletePath.getCompletion(pn.getParsedString())
+        return Autocompletion.literal(pn, completion)
 
 
 DEFAULT_INLINE_AUTOCOMPLETER = DefaultInlineAutocompleter()
-
-
-EMPTY_AUTOCOMPLETER = EmptyAutocompleter()
 
 
 PATH_AUTOCOMPLETER = PathAutocompleter()

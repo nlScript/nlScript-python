@@ -9,7 +9,7 @@ from nls.autocompleter import IAutocompleter
 from nls.core.bnf import BNF
 from nls.core.nonterminal import NonTerminal
 from nls.core.terminal import Terminal
-from nls.core.autocompletion import Autocompletion
+from nls.core.autocompletion import Autocompletion, Veto
 
 import sys
 
@@ -53,7 +53,6 @@ class RDParser:
         ret = self.createParsedTree(parsedSequence, last)
         ret = self.buildAst(ret)
         if ret.matcher.state == ParsingState.FAILED:
-            print(toVizDotLink(ret))
             raise ParseException(ret, last[0], self)
         return ret
 
@@ -111,16 +110,20 @@ class RDParser:
             return
         autocompletingParentStart = autocompletingParent.matcher.pos
         alreadyEntered = self._lexer.substring(autocompletingParentStart)
-        completion = autocompletingParent.getAutocompletion(False)
+        completion: List[Autocompletion] or None = autocompletingParent.getAutocompletion(False)
         if completion is not None and len(completion) > 0:
-            for c in completion.split(";;;"):
-                if c == IAutocompleter.VETO:
+            for c in completion:
+                if c is None or len(c.getCompletion()) == 0:
+                    continue
+                if isinstance(c, Veto):
                     # autocompletions.clear()
+                    # TODO clear it here and only add the veto
                     autocompletions.append(None)  # to prevent further autocompletion
                     return
-                ac = Autocompletion(c, alreadyEntered)
-                if ac not in autocompletions:
-                    autocompletions.append(ac)
+                c.setAlreadyEnteredText(alreadyEntered)
+                ccomp = c.getCompletion()
+                if not any(map(lambda x: x.getCompletion() == ccomp, autocompletions)):
+                    autocompletions.append(c)
 
     def parseRecursive(self, symbolSequence: SymbolSequence, endOfInput: List[SymbolSequence]) -> SymbolSequence:
         # print("parseRecursive:")

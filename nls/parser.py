@@ -12,7 +12,6 @@ from nls.ebnf import ebnfparsednodefactory
 from nls.ebnf.ebnfparser import EBNFParser, ParseStartListener
 from nls.evaluator import Evaluator, FIRST_CHILD_EVALUATOR, DEFAULT_EVALUATOR
 from nls.util.range import OPTIONAL, PLUS, STAR, Range
-from nls.core import graphviz
 from nls.core.nonterminal import NonTerminal
 from nls.autocompleter import Autocompleter, DEFAULT_INLINE_AUTOCOMPLETER, EntireSequenceAutocompleter
 from nls.parsednode import ParsedNode
@@ -47,7 +46,7 @@ class Parser:
         self.LINEBREAK_STAR = self._targetGrammar.star("linebreak-star", self.LINEBREAK.withName())
         self.program()
 
-        self._symbol2Autocompletion: Dict[str, str] = {}
+        self._symbol2Autocompletion: Dict[str, List[Autocompletion]] = {}
 
     @property
     def grammar(self) -> EBNF:

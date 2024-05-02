@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from nls.autocompleter import IfNothingYetEnteredAutocompleter, EMPTY_AUTOCOMPLETER, Autocompleter
+from nls.autocompleter import Autocompleter, DEFAULT_INLINE_AUTOCOMPLETER
+from nls.core.autocompletion import Autocompletion, EntireSequence
 from nls.core.terminal import WHITESPACE, literal, characterClass
 from nls.ebnf.join import Join
 from nls.ebnf.optional import Optional
@@ -165,33 +166,40 @@ class EBNFCore:
                                   wsStar,
                                   literal(",").withName(),
                                   wsStar])
-        delimiter.setAutocompleter(IfNothingYetEnteredAutocompleter(", "))
+        delimiter.setAutocompleter(Autocompleter(lambda pn, justCheck: Autocompletion.literal(pn, [""] if len(pn.getParsedString()) > 0 else [", "])))
         return self.joinWithRange(typ, child, None, None, delimiter.tgt, STAR)
 
     def tuple(self, typ: str or None, child: Named, names: List[str]) -> Rule:
         wsStar = self.star(None, WHITESPACE.withName()).withName("ws*")
-        wsStar.get().setAutocompleter(EMPTY_AUTOCOMPLETER)
-        jopen = self.sequence(None, [literal("(").withName("open"), wsStar]).tgt
-        jclose = self.sequence(None, [wsStar, literal(")").withName("close")]).tgt
-        delimiter = self.sequence(None, [wsStar, literal(",").withName("delimiter"), wsStar]).tgt
-        ret = self.joinWithNames(typ, child, jopen, jclose, delimiter, names=names)
+        wsStar.get().setAutocompleter(Autocompleter(lambda pn, justCheck: Autocompletion.literal(pn, [""])))
+        jopen: Rule = self.sequence(None, [literal("(").withName("open"), wsStar])
+        jclose: Rule = self.sequence(None, [wsStar, literal(")").withName("close")])
+        delimiter: Rule = self.sequence(None, [wsStar, literal(",").withName("delimiter"), wsStar])
+        ret: Rule = self.joinWithNames(typ, child, jopen.tgt, jclose.tgt, delimiter.tgt, names=names)
 
         def getAutocompletion(pn: ParsedNode, justCheck: bool) -> str or None:
             if len(pn.getParsedString()) > 0:
                 return None
             if justCheck:
-                return Autocompleter.DOES_AUTOCOMPLETE
-            rule = cast(Join, pn.getRule())
-            sb = "(${" + rule.getNameForChild(0) + "}"
-            for i in range(1, rule.cardinality.lower):
-                sb += ", ${" + rule.getNameForChild(i) + "}"
-            return sb + ")"
+                return Autocompletion.doesAutocomplete(pn)
+
+            seq = EntireSequence(pn)
+            seq.addLiteral(jopen.tgt, "open", "(")
+            seq.addParameterized(child.getSymbol(), names[0], names[0])
+            for idx in range(1, len(names)):
+                name = names[idx]
+                seq.addLiteral(delimiter.tgt, "delimiter", ", ")
+                seq.addParameterized(child.getSymbol(), name, name)
+            seq.addLiteral(jclose.tgt, "close", ")")
+            return seq.asArray()
+
         ret.setAutocompleter(Autocompleter(getAutocompletion))
         return ret
 
     def makeCharacterClass(self, name: str or None, pattern: str) -> Rule:
         ret: Rule = self.sequence(name, [characterClass(pattern).withName("character-class")])
         ret.setEvaluator(Evaluator(lambda pn: pn.getParsedString("character-class")[0]))
+        ret.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
         return ret
 
     def sequence(self, typ: str or None, children: List[Named]) -> Rule:

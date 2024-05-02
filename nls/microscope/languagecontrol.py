@@ -3,7 +3,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta, date, time
 from typing import List
 
-from nls.autocompleter import IfNothingYetEnteredAutocompleter, Autocompleter
+from nls.autocompleter import Autocompleter
+from nls.core.autocompletion import Autocompletion
 from nls.ebnf.ebnfparser import ParseStartListener
 from nls.ebnf.parselistener import ParseListener
 from nls.evaluator import Evaluator
@@ -60,7 +61,7 @@ class LanguageControl:
 
         parser.defineType("channel-name", "'{<name>:[A-Za-z0-9]:+}'",
                           Evaluator(lambda e: e.getParsedString("<name>")),
-                          IfNothingYetEnteredAutocompleter("'${name}'"))
+                          True)
 
         parser.defineSentence(
             "Define channel {channel-name:channel-name}:" +
@@ -77,7 +78,7 @@ class LanguageControl:
         # Define "Tile Scan 1" as a (w x h x d) region centered at (x, y, z)
         parser.defineType("region-name", "'{<region-name>:[a-zA-Z0-9]:+}'",
                           Evaluator(lambda e: e.getParsedString("<region-name>")),
-                          IfNothingYetEnteredAutocompleter("'${region-name}'"))
+                          True)
 
         parser.defineType("region-dimensions", "{<width>:float} x {<height>:float} x {<depth>:float} microns",
                           Evaluator(lambda e: [
@@ -105,11 +106,11 @@ class LanguageControl:
 
         parser.defineType("defined-channels", "'{channel:[A-Za-z0-9]:+}'",
                           evaluator=Evaluator(lambda e: e.getParsedString("channel")),
-                          autocompleter=Autocompleter(lambda e, justCheck: ";;;".join(definedChannels)))
+                          autocompleter=Autocompleter(lambda e, justCheck: Autocompletion.literal(e, definedChannels)))
 
         parser.defineType("defined-positions", "'{position:[A-Za-z0-9]:+}'",
                           evaluator=Evaluator(lambda e: e.getParsedString("position")),
-                          autocompleter=Autocompleter(lambda e, justCheck: ";;;".join(definedRegions)))
+                          autocompleter=Autocompleter(lambda e, justCheck: Autocompletion.literal(e, definedRegions)))
 
         parser.defineType("time-unit", "second(s)", evaluator=Evaluator(lambda e: 1))
         parser.defineType("time-unit", "minute(s)", evaluator=Evaluator(lambda e: 60))

@@ -13,8 +13,9 @@ from PyQt5.QtWidgets import QCompleter, QPlainTextEdit, QApplication, QTextEdit,
     QWidget, QSplitter, QPushButton, QVBoxLayout
 
 from nls.core import graphviz
-from nls.core.autocompletion import Autocompletion
+from nls.core.autocompletion import Autocompletion, Literal, Parameterized, EntireSequence
 from nls.core.matcher import Matcher
+from nls.ebnf.rule import Rule
 from nls.parsednode import ParsedNode
 from nls.parseexception import ParseException
 from nls.parser import Parser
@@ -208,7 +209,7 @@ class AutocompletionContext(CodeEditor):
         self.completer = ACPopup(parent)
         self.completer.setWidget(self)
 
-    def insertCompletion(self, completion: str) -> None:
+    def insertCompletion(self, completion: Autocompletion) -> None:
         tc = self.textCursor()
 
         entireText = self.toPlainText()
@@ -219,7 +220,7 @@ class AutocompletionContext(CodeEditor):
         tc.movePosition(QTextCursor.PreviousCharacter, QTextCursor.KeepAnchor, len(self.completer.completionPrefix()))
 
         try:
-            completion.index("${")  # throws ValueError if '${' does not exist in completion
+            completion.getCompletion().index("${")  # throws ValueError if '${' does not exist in completion
             self.cancelParameterizedCompletion()
             self.parameterizedCompletion = ParameterizedCompletionContext(tc=self)
             self.parameterizedCompletion.parameterChanged.connect(self.parameterChanged)
@@ -227,7 +228,7 @@ class AutocompletionContext(CodeEditor):
         except ValueError:
             # self.cancelParameterizedCompletion()
             tc.removeSelectedText()
-            tc.insertText(completion)
+            tc.insertText(completion.getCompletion())
             self.completer.popup().hide()
             if cursorIsAtEnd:
                 self.autocomplete()
@@ -325,30 +326,31 @@ class AutocompletionContext(CodeEditor):
             return
 
         if len(autocompletions) == 1:
-            completion = autocompletions[0].completion
+            completion = autocompletions[0].getCompletion()
             if autoinsertSingleOption or completion.find("${") == -1:
                 self.completer.setCompletions(autocompletions)
-                alreadyEntered = autocompletions[0].alreadyEnteredText
+                alreadyEntered = autocompletions[0].getAlreadyEnteredText()
                 self.completer.setCompletionPrefix(alreadyEntered)
-                self.insertCompletion(autocompletions[0].completion)
+                self.insertCompletion(autocompletions[0])
         elif len(autocompletions) > 1:
             self.completer.setCompletions(autocompletions)
-            alreadyEntered = autocompletions[0].alreadyEnteredText
+            alreadyEntered = autocompletions[0].getAlreadyEnteredText()
             self.completer.setCompletionPrefix(alreadyEntered)
 
-            remainingText = entireText[anchor:]
-            matchingLength = 0
-            for ac in autocompletions:
-                remainingCompletion = ac.completion[len(alreadyEntered):]
-                if remainingText.startswith(remainingCompletion):
-                    matchingLength = len(remainingCompletion)
-                    break
+            if False:
+                remainingText = entireText[anchor:]
+                matchingLength = 0
+                for ac in autocompletions:
+                    remainingCompletion = ac.getCompletion()[len(alreadyEntered):]
+                    if remainingText.startswith(remainingCompletion):
+                        matchingLength = len(remainingCompletion)
+                        break
 
-            if matchingLength > 0:
-                cursor = self.textCursor()
-                cursor.setPosition(anchor)
-                cursor.movePosition(QTextCursor.Right, QTextCursor.KeepAnchor, matchingLength)
-                self.setTextCursor(cursor)
+                if matchingLength > 0:
+                    cursor = self.textCursor()
+                    cursor.setPosition(anchor)
+                    cursor.movePosition(QTextCursor.Right, QTextCursor.KeepAnchor, matchingLength)
+                    self.setTextCursor(cursor)
 
             popup = self.completer.popup()
             popup.setCurrentIndex(self.completer.completionModel().index(0, 0))
@@ -388,9 +390,9 @@ class ACPopup(QCompleter):
         self._completions = completions
 
         def printNice(c: Autocompletion) -> str:
-            ret = c.completion
+            ret = c.getCompletion()
             parsedParams = []
-            ParameterizedCompletionContext.parseParameters(ret, parsedParams)
+            ParameterizedCompletionContext.parseParameters(c, parsedParams)
             if ret.startswith("\n"):
                 ret = "<new line>"  # "<strong>new</strong> line"
             if ret == "":
@@ -402,8 +404,8 @@ class ACPopup(QCompleter):
     def selectionChanged(self, idx: QModelIndex) -> None:
         self.lastSelected = idx.row()
 
-    def getSelected(self) -> str or None:
-        return None if self.lastSelected < 0 else self._completions[self.lastSelected].completion
+    def getSelected(self) -> Autocompletion or None:
+        return None if self.lastSelected < 0 else self._completions[self.lastSelected]
 
 
 class ParameterizedCompletionContext(QObject):
@@ -413,6 +415,7 @@ class ParameterizedCompletionContext(QObject):
         super().__init__(parent=tc)
         self._tc = tc
         self._parameters: List[Param] = []
+        self._forAutocompletion: Autocompletion or None = None
 
     @property
     def parameters(self) -> List[Param]:
@@ -422,7 +425,7 @@ class ParameterizedCompletionContext(QObject):
         for p in self._parameters:
             print(str(p))
 
-    def addHighlight(self, name: str, i0: int, i1: int) -> Param:
+    def addHighlight(self, name: str, autocompletion: Autocompletion or None, i0: int, i1: int) -> Param:
         selection = QTextEdit.ExtraSelection()
 
         cursor = self._tc.textCursor()
@@ -433,24 +436,14 @@ class ParameterizedCompletionContext(QObject):
         self._tc.addExtrasSelection(selection)
         self._tc.updateExtraSelections()
 
-        param = Param(name, selection)
+        param = Param(name, autocompletion, selection)
         return param
 
-    def insertCompletion(self, offset: int, autocompletion: str) -> None:
-        parsedParams: List[ParsedParam] = []
-        insertionString = ParameterizedCompletionContext.parseParameters(autocompletion, parsedParams)
-        cursor = self._tc.textCursor()
-        cursor.setPosition(offset)
-        cursor.insertText(insertionString)
-        self._parameters.clear()
-        for pp in parsedParams:
-            self._parameters.append(self.addHighlight(pp.name, offset + pp.i0, offset + pp.i1))
-        atEnd = offset + len(insertionString)
-        self._parameters.append(self.addHighlight("", atEnd, atEnd))
+    def getForAutocompletion(self) -> Autocompletion:
+        return self._forAutocompletion
 
-        self.cycle(0)
-
-    def replaceSelection(self, autocompletion: str) -> None:
+    def replaceSelection(self, autocompletion: Autocompletion) -> None:
+        self._forAutocompletion = autocompletion
         parsedParams: List[ParsedParam] = []
         insertionString = ParameterizedCompletionContext.parseParameters(autocompletion, parsedParams)
         cursor = self._tc.textCursor()
@@ -462,9 +455,9 @@ class ParameterizedCompletionContext(QObject):
         self._tc.updateExtraSelections()
         self._parameters.clear()
         for pp in parsedParams:
-            self._parameters.append(self.addHighlight(pp.name, offset + pp.i0, offset + pp.i1))
+            self._parameters.append(self.addHighlight(pp.name, pp.autocompletion, offset + pp.i0, offset + pp.i1))
         atEnd = offset + len(insertionString)
-        self._parameters.append(self.addHighlight("", atEnd, atEnd))
+        self._parameters.append(self.addHighlight("", None, atEnd, atEnd))
         self.cycle(0)
 
     def getParametersSize(self):
@@ -528,58 +521,80 @@ class ParameterizedCompletionContext(QObject):
         return False
 
     @staticmethod
-    def parseParameters(paramString: str, ret: List[ParsedParam]) -> str:
-        varName = None
-        insertString = ""
-        paramStringLen = len(paramString)
-        hlStart = -1
-        i = 0
-        while i < paramStringLen:
-            cha = paramString[i]
-            if cha == '$' and i < paramStringLen - 1 and paramString[i + 1] == '{':
-                if varName is None:
-                    varName = ""
-                    hlStart = len(insertString)
-                    i = i + 1
-                else:
-                    raise Exception("Expected '}' before next '${'")
+    def parseParameters(autocompletion: Autocompletion, ret: List[ParsedParam], offset: int = 0) -> str:
+        if isinstance(autocompletion, Literal):
+            return autocompletion.getCompletion()
 
-            elif varName is not None and cha == '}':
-                hlEnd = len(insertString)
-                ret.append(ParsedParam(varName, hlStart, hlEnd))  # hlEnd is exclusive
-                varName = None
+        if isinstance(autocompletion, Parameterized):
+            s = cast(Parameterized, autocompletion).paramName
+            ret.append(ParsedParam(s, 0, len(s), autocompletion))
+            return s
 
-            elif varName is not None:
-                varName = varName + cha
-                insertString = insertString + cha
-            else:
-                insertString = insertString + cha
-            i = i + 1
-        return insertString
+        if isinstance(autocompletion, EntireSequence):
+            entireSequence: EntireSequence = cast(EntireSequence, autocompletion)
+            sequenceOfCompletions: List[List[Autocompletion]] = entireSequence.getSequenceOfCompletions()
+            sequence: Rule = autocompletion.getSequence()
+            insertionString: str = ""
+            for i, autocompletions in enumerate(sequenceOfCompletions):
+                n: int = len(autocompletions)
+                if n > 1:
+                    name: str = sequence.getNameForChild(i)
+                    p: Parameterized = Parameterized(forSymbol=sequence.children[i], symbolName=name, paramName=name)
+                    i0: int = offset + len(insertionString)
+                    i1: int = i0 + len(name)
+                    ret.append(ParsedParam(name, i0, i1, p))
+                    insertionString += name
+                elif n == 1:
+                    single: Autocompletion = autocompletions[0]
+                    if isinstance(single, Literal):
+                        insertionString += single.getCompletion()
+                    elif isinstance(single, Parameterized):
+                        parameterized: Parameterized = cast(Parameterized, single)
+                        s = parameterized.paramName
+                        i0: int = offset + len(insertionString)
+                        i1 = i0 + len(s)
+                        ret.append(ParsedParam(s, i0, i1, parameterized))
+                        insertionString += s
+                    elif isinstance(single, EntireSequence):
+                        entire: EntireSequence = cast(EntireSequence, single)
+                        offs: int = len(insertionString)
+                        s = ParameterizedCompletionContext.parseParameters(entire, ret, offs)
+                        insertionString += s
+                    else:
+                        print("Unknown/unexpected autocompletion")
+            return insertionString
+
+        raise Exception("Unexpected completion type: " + str(type(autocompletion)))
 
 
 class ParsedParam:
-    def __init__(self, name: str, i0: int, i1: int):
+    def __init__(self, name: str, i0: int, i1: int, autocompletion: Autocompletion):
         self._name = name
         self._i0 = i0
         self._i1 = i1
+        self._autocompletion = autocompletion
 
     @property
-    def i0(self):
+    def i0(self) -> int:
         return self._i0
 
     @property
-    def i1(self):
+    def i1(self) -> int:
         return self._i1
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
+
+    @property
+    def autocompletion(self) -> Autocompletion:
+        return self._autocompletion
 
 
 class Param:
-    def __init__(self, name: str, selection: QTextEdit.ExtraSelection):
+    def __init__(self, name: str, autocompletion: Autocompletion, selection: QTextEdit.ExtraSelection):
         self._name = name
+        self._autocompletion = autocompletion
         self._highlight = selection
 
     @property
