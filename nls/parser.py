@@ -229,7 +229,7 @@ class Parser:
                 ).withName("plus"),
                 literal("]").withName()
             ]
-        ).setEvaluator(Evaluator(lambda pn: characterClass(pn.getParsedString())))
+        ).setEvaluator(Evaluator(lambda pn: self._targetGrammar.makeCharacterClass(None, pn.getParsedString()).tgt))
         return ret
 
     def typ(self) -> Rule:

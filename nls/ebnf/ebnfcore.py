@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from nls.autocompleter import IfNothingYetEnteredAutocompleter, EMPTY_AUTOCOMPLETER, Autocompleter
-from nls.core.terminal import WHITESPACE, literal
+from nls.core.terminal import WHITESPACE, literal, characterClass
 from nls.ebnf.join import Join
 from nls.ebnf.optional import Optional
 from nls.ebnf.orrule import Or
@@ -12,7 +12,7 @@ from nls.ebnf.plus import Plus
 from nls.ebnf.repeat import Repeat
 from nls.ebnf.sequence import Sequence
 from nls.ebnf.star import Star
-from nls.evaluator import FIRST_CHILD_EVALUATOR
+from nls.evaluator import FIRST_CHILD_EVALUATOR, Evaluator
 from nls.core.nonterminal import NonTerminal
 from nls.util.range import Range, STAR
 
@@ -187,6 +187,11 @@ class EBNFCore:
                 sb += ", ${" + rule.getNameForChild(i) + "}"
             return sb + ")"
         ret.setAutocompleter(Autocompleter(getAutocompletion))
+        return ret
+
+    def makeCharacterClass(self, name: str or None, pattern: str) -> Rule:
+        ret: Rule = self.sequence(name, [characterClass(pattern).withName("character-class")])
+        ret.setEvaluator(Evaluator(lambda pn: pn.getParsedString("character-class")[0]))
         return ret
 
     def sequence(self, typ: str or None, children: List[Named]) -> Rule:

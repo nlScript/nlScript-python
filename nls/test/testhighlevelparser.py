@@ -7,6 +7,7 @@ from nls.core.named import Named
 from nls.core.nonterminal import NonTerminal
 from nls.core.parsingstate import ParsingState
 from nls.core.rdparser import RDParser
+from nls.core.symbol import Symbol
 from nls.core.terminal import CharacterClass, characterClass, DIGIT, Literal, Terminal
 from nls.ebnf import ebnfparsednodefactory
 from nls.ebnf.ebnf import EBNF
@@ -146,8 +147,9 @@ def testCharacterClass():
     grammar = hlp.grammar
     grammar.compile(hlp.CHARACTER_CLASS.tgt)
 
-    cc = cast(CharacterClass, evaluate(grammar, "[a-zA-Z]"))
-    assertEquals(characterClass("[a-zA-Z]"), cc)
+    nt: NonTerminal = cast(NonTerminal, evaluate(grammar, "[a-zA-Z]"))
+    rule = hlp.targetGrammar.getRules(nt)[0]
+    assertEquals(characterClass("[a-zA-Z]"), rule.children[0])
 
 
 def testType():
@@ -243,7 +245,8 @@ def testVariable():
     rule = hlp.targetGrammar.getRules(evaluatedNonTerminal.get())[0]
     assertEquals(Plus, type(rule))
     plus = cast(Plus, rule)
-    assertEquals("[A-Z]", plus.getEntry().symbol)
+    chclass: Symbol = hlp.targetGrammar.getRules(cast(NonTerminal, plus.getEntry()))[0].children[0]
+    assertEquals("[A-Z]", chclass.symbol)
 
     test = "{blubb , alkjad asd 4. <>l}"
     evaluatedTerminal = cast(Named[Terminal], evaluateHighlevelParser(hlp, test))
