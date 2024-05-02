@@ -23,6 +23,7 @@ class EBNF(EBNFCore):
     INTEGER_NAME = "int"
     FLOAT_NAME = "float"
     MONTH_NAME = "month"
+    WEEKDAY_NAME = "weekday"
     WHITESPACE_STAR_NAME = "whitespace-star"
     WHITESPACE_PLUS_NAME = "whitespace-plus"
     INTEGER_RANGE_NAME = "integer-range"
@@ -38,6 +39,7 @@ class EBNF(EBNFCore):
         self.INTEGER         = self.makeInteger()        if other is None else other.INTEGER
         self.FLOAT           = self.makeFloat()          if other is None else other.FLOAT
         self.MONTH           = self.makeMonth()          if other is None else other.MONTH
+        self.WEEKDAY         = self.makeWeekday()        if other is None else other.WEEKDAY
         self.WHITESPACE_STAR = self.makeWhitespaceStar() if other is None else other.WHITESPACE_STAR
         self.WHITESPACE_PLUS = self.makeWhitespacePlus() if other is None else other.WHITESPACE_PLUS
         self.INTEGER_RANGE   = self.makeIntegerRange()   if other is None else other.INTEGER_RANGE
@@ -194,7 +196,18 @@ class EBNF(EBNFCore):
             self.sequence(None, [literal("September").withName()]).setEvaluator(Evaluator(lambda pn: 8)).withName("september"),
             self.sequence(None, [literal("October")  .withName()]).setEvaluator(Evaluator(lambda pn: 9)).withName("october"),
             self.sequence(None, [literal("November") .withName()]).setEvaluator(Evaluator(lambda pn: 10)).withName("november"),
-            self.sequence(None, [literal("December") .withName()]).setEvaluator(Evaluator(lambda pn: 110)).withName("december"),
+            self.sequence(None, [literal("December") .withName()]).setEvaluator(Evaluator(lambda pn: 11)).withName("december"),
+        ])
+
+    def makeWeekday(self) -> Rule:
+        return self.orrule(self.WEEKDAY_NAME, [
+            self.sequence(None, [literal("Monday")   .withName()]).setEvaluator(Evaluator(lambda pn: 0)) .withName("monday"),
+            self.sequence(None, [literal("Tuesday")  .withName()]).setEvaluator(Evaluator(lambda pn: 1)) .withName("tuesday"),
+            self.sequence(None, [literal("Wednesday").withName()]).setEvaluator(Evaluator(lambda pn: 2)) .withName("wednesday"),
+            self.sequence(None, [literal("Thursday") .withName()]).setEvaluator(Evaluator(lambda pn: 3)) .withName("thursday"),
+            self.sequence(None, [literal("Friday")   .withName()]).setEvaluator(Evaluator(lambda pn: 4)) .withName("friday"),
+            self.sequence(None, [literal("Saturday") .withName()]).setEvaluator(Evaluator(lambda pn: 5)) .withName("saturday"),
+            self.sequence(None, [literal("Sunday")   .withName()]).setEvaluator(Evaluator(lambda pn: 6)) .withName("sunday")
         ])
 
     def makePath(self) -> Rule:
