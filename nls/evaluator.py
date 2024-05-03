@@ -31,14 +31,7 @@ class AllChildrenEvaluator(IEvaluator):
         if len(pn.children) == 0:
             return list()
 
-        ret = list(map(lambda ch: ch.evaluate(), pn.children))
-
-        allAreCharacters = all(map(lambda x: isinstance(x, str) and len(x) == 1, ret))
-
-        if not allAreCharacters:
-            return ret
-
-        return "".join(ret)
+        return list(map(lambda ch: ch.evaluate(), pn.children))
 
 
 class FirstChildEvaluator(IEvaluator):
