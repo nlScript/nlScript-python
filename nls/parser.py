@@ -90,7 +90,7 @@ class Parser:
             newRule.setAutocompleter(autocompleterToUse)
 
         return newRule.withName(typ)
-    
+
     def undefineType(self, atype: str) -> None:
         unitsSymbol: NonTerminal = cast(NonTerminal, self.targetGrammar.getSymbol(atype))
         self.targetGrammar.removeRules(unitsSymbol)
@@ -233,7 +233,7 @@ class Parser:
                 ).withName("plus"),
                 literal("]").withName()
             ]
-        ).setEvaluator(Evaluator(lambda pn: self._targetGrammar.makeCharacterClass(None, pn.getParsedString()).tgt))
+        ).setEvaluator(Evaluator(lambda pn: characterClass(pn.getParsedString())))
         return ret
 
     def typ(self) -> Rule:
@@ -311,7 +311,7 @@ class Parser:
                 cast(NonTerminal, symbol).withName(variableName)
 
             if quantifierObject is not None:
-                autocompleter: Autocompleter = None
+                autocompleter: Autocompleter | None = None
                 # set a new fallback autocompleter. This is important for e.g. {bla:[a-z]:4} or {bla:digit:4}
                 if isinstance(typeObject, Terminal):
                     autocompleter = DEFAULT_INLINE_AUTOCOMPLETER

@@ -18,8 +18,8 @@ if TYPE_CHECKING:
 
 
 class EBNF(EBNFCore):
-    DIGIT_NAME = "digit"
-    LETTER_NAME = "letter"
+    DIGIT_NAME = terminal.DIGIT.symbol
+    LETTER_NAME = terminal.LETTER.symbol
     SIGN_NAME = "sign"
     INTEGER_NAME = "int"
     FLOAT_NAME = "float"
@@ -36,8 +36,6 @@ class EBNF(EBNFCore):
 
     def __init__(self, other: EBNF = None):
         super().__init__(other)
-        self.DIGIT           = self.makeDigit()          if other is None else other.DIGIT
-        self.LETTER          = self.makeLetter()         if other is None else other.LETTER
         self.SIGN            = self.makeSign()           if other is None else other.SIGN
         self.INTEGER         = self.makeInteger()        if other is None else other.INTEGER
         self.FLOAT           = self.makeFloat()          if other is None else other.FLOAT
@@ -51,6 +49,8 @@ class EBNF(EBNFCore):
         self.DATE            = self.makeDate()           if other is None else other.DATE
         self.DATETIME        = self.makeDatetime()       if other is None else other.DATETIME
         self.COLOR           = self.makeColor()          if other is None else other.COLOR
+        super().symbols[self.DIGIT_NAME] = terminal.DIGIT
+        super().symbols[self.LETTER_NAME] = terminal.LETTER
 
     @staticmethod
     def clearFilesystemCache():
@@ -87,18 +87,6 @@ class EBNF(EBNFCore):
 
         ret.setEvaluator(Evaluator(evaluate))
         ret.setAutocompleter(EntireSequenceAutocompleter(self, {}))
-        return ret
-
-    def makeLetter(self) -> Rule:
-        ret = self.sequence(EBNF.LETTER_NAME, [terminal.LETTER.withName()])
-        ret.setEvaluator(Evaluator(lambda pn: pn.getParsedString()[0]))
-        ret.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
-        return ret
-
-    def makeDigit(self) -> Rule:
-        ret = self.sequence(EBNF.DIGIT_NAME, [terminal.DIGIT.withName()])
-        ret.setEvaluator(Evaluator(lambda pn: pn.getParsedString()[0]))
-        ret.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
         return ret
 
     def makeFloat(self) -> Rule:

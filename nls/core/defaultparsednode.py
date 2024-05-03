@@ -1,8 +1,8 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from nls.core.named import Named
-from nls.core.terminal import Literal
+from nls.core.terminal import Literal, Terminal
 
 if TYPE_CHECKING:
     from typing import List
@@ -101,6 +101,8 @@ class DefaultParsedNode:
         self._children.clear()
 
     def evaluateSelf(self):
+        if self.symbol.isTerminal():
+            return cast(Terminal, self.symbol).evaluate(self.matcher)
         return self.getParsedString()
 
     def evaluateChildByIndex(self, i: int):

@@ -31,6 +31,10 @@ class Terminal(Symbol):
     def matches(self, lexer: Lexer) -> Matcher:
         pass
 
+    @abstractmethod
+    def evaluate(self, matcher: Matcher) -> object:
+        pass
+
     def withName(self, name: str = None):
         return Named[Terminal](self, name)
 
@@ -46,6 +50,9 @@ class Epsilon(Terminal):
     def matches(self, lexer: Lexer) -> Matcher:
         return Matcher(ParsingState.SUCCESSFUL, lexer.pos, "")
 
+    def evaluate(self, matcher: Matcher) -> object:
+        return None
+
 
 class EndOfInput(Terminal):
     def __init__(self):
@@ -57,6 +64,9 @@ class EndOfInput(Terminal):
         if lexer.isAtEnd():
             return Matcher(ParsingState.SUCCESSFUL, pos, " ")
         return Matcher(ParsingState.FAILED, pos, "")
+
+    def evaluate(self, matcher: Matcher) -> object:
+        return None
 
 
 class Digit(Terminal):
@@ -72,6 +82,9 @@ class Digit(Terminal):
         if c.isdigit():
             return Matcher(ParsingState.SUCCESSFUL, pos, c)
         return Matcher(ParsingState.FAILED, pos, c)
+
+    def evaluate(self, matcher: Matcher) -> object:
+        return matcher.parsed[0]
 
 
 class Literal(Terminal):
@@ -89,6 +102,9 @@ class Literal(Terminal):
                 return Matcher(ParsingState.FAILED, pos, lexer.substring(pos, pos + i + 1))
 
         return Matcher(ParsingState.SUCCESSFUL, pos, symbol)
+
+    def evaluate(self, matcher: Matcher) -> object:
+        return matcher.parsed
 
     def __str__(self) -> str:
         return "'" + self._symbol + "'"
@@ -108,6 +124,9 @@ class Letter(Terminal):
             return Matcher(ParsingState.SUCCESSFUL, pos, c)
         return Matcher(ParsingState.FAILED, pos, c)
 
+    def evaluate(self, matcher: Matcher) -> object:
+        return matcher.parsed[0]
+
 
 class Whitespace(Terminal):
     def __init__(self):
@@ -122,6 +141,9 @@ class Whitespace(Terminal):
         if c == ' ' or c == '\t':
             return Matcher(ParsingState.SUCCESSFUL, pos, c)
         return Matcher(ParsingState.FAILED, pos, c)
+
+    def evaluate(self, matcher: Matcher) -> object:
+        return matcher.parsed[0]
 
 
 class CharacterClass(Terminal):
@@ -174,6 +196,9 @@ class CharacterClass(Terminal):
         if self._ranges.checkCharacter(ord(c)):
             return Matcher(ParsingState.SUCCESSFUL, pos, c)
         return Matcher(ParsingState.FAILED, pos, c)
+
+    def evaluate(self, matcher: Matcher) -> object:
+        return matcher.parsed[0]
 
 
 class CharacterRange:

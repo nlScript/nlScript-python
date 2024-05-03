@@ -196,12 +196,6 @@ class EBNFCore:
         ret.setAutocompleter(Autocompleter(getAutocompletion))
         return ret
 
-    def makeCharacterClass(self, name: str or None, pattern: str) -> Rule:
-        ret: Rule = self.sequence(name, [characterClass(pattern).withName("character-class")])
-        ret.setEvaluator(Evaluator(lambda pn: pn.getParsedString("character-class")[0]))
-        ret.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
-        return ret
-
     def sequence(self, typ: str or None, children: List[Named]) -> Rule:
         tgt = self.newOrExistingNonTerminal(typ)
         sequence = Sequence(tgt, EBNFCore.getSymbols(children))
