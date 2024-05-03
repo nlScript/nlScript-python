@@ -306,15 +306,20 @@ class Parser:
                 cast(NonTerminal, symbol).withName(variableName)
 
             if quantifierObject is not None:
+                autocompleter: Autocompleter = None
+                # set a new fallback autocompleter. This is important for e.g. {bla:[a-z]:4} or {bla:digit:4}
+                if isinstance(typeObject, Terminal):
+                    autocompleter = DEFAULT_INLINE_AUTOCOMPLETER
                 range = cast(Range, quantifierObject)
                 if range == STAR:
-                    symbol = self._targetGrammar.star(None, namedSymbol).tgt
+                    symbol = self._targetGrammar.star(None, namedSymbol).setAutocompleter(autocompleter).tgt
                 elif range == PLUS:
-                    symbol = self._targetGrammar.plus(None, namedSymbol).tgt
+                    symbol = self._targetGrammar.plus(None, namedSymbol).setAutocompleter(autocompleter).tgt
                 elif range == OPTIONAL:
-                    symbol = self._targetGrammar.optional(None, namedSymbol).tgt
+                    symbol = self._targetGrammar.optional(None, namedSymbol).setAutocompleter(autocompleter).tgt
                 else:
-                    symbol = self._targetGrammar.repeat(None, namedSymbol, rfrom=range.lower, rto=range.upper).tgt
+                    symbol = self._targetGrammar.repeat(None, namedSymbol, rfrom=range.lower, rto=range.upper)\
+                        .setAutocompleter(autocompleter).tgt
                 namedSymbol = cast(NonTerminal, symbol).withName(variableName)
 
             return namedSymbol
