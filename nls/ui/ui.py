@@ -14,7 +14,10 @@ from PyQt5.QtWidgets import QCompleter, QPlainTextEdit, QApplication, QTextEdit,
 
 from nls.core import graphviz
 from nls.core.autocompletion import Autocompletion, Literal, Parameterized, EntireSequence
+from nls.core.bnf import BNF
 from nls.core.matcher import Matcher
+from nls.core.nonterminal import NonTerminal
+from nls.core.symbol import Symbol
 from nls.ebnf.rule import Rule
 from nls.parsednode import ParsedNode
 from nls.parseexception import ParseException
@@ -314,7 +317,7 @@ class AutocompletionContext(CodeEditor):
         entireText = self.toPlainText()
         anchor = self.textCursor().anchor()
 
-        textToCursor = self.toPlainText()[0:anchor]
+        textToCursor = entireText[0:anchor]
         autocompletions: List[Autocompletion] = []
 
         self._errorHighlight.clearError()
@@ -324,6 +327,48 @@ class AutocompletionContext(CodeEditor):
             f: Matcher = e.getFirstAutocompletingAncestorThatFailed().matcher
             self._errorHighlight.setError(f.pos, f.pos + len(f.parsed))
             return
+
+        # we are in a parameterized completion context.
+        # we still want to autocomplete, but not beyond the end of the current parameter
+        bnf: BNF = self.parser.targetGrammar.getBNF()
+        if self.parameterizedCompletion is not None:
+            if len(autocompletions) > 0:
+                atLeastOneCompletionForCurrentParameter: bool = False
+                for comp in autocompletions:
+                    symbol = comp.forSymbol
+
+                    # if comp is an EntireSequence completion, we should just check the first
+                    # we can do that using ParameterizedCompletionContext.parseParameters
+                    if isinstance(comp, EntireSequence):
+                        tmp: List[ParsedParam] = []
+                        ParameterizedCompletionContext.parseParameters(comp, tmp, 0)
+                        comp = tmp[0].autocompletion
+                        symbol = comp.forSymbol
+
+                    if symbol == self.parameterizedCompletion.getForAutocompletion().forSymbol:
+                        atLeastOneCompletionForCurrentParameter = True
+                        break
+
+                    # check if symbol is a descendent of the parameters autocompletion symbol
+                    parameterSymbol: Symbol = self.parameterizedCompletion.getCurrentParameter().autocompletion.forSymbol
+                    # symbol == parameterSymbol? -> fine
+                    if symbol == parameterSymbol:
+                        atLeastOneCompletionForCurrentParameter = True
+                        break
+
+                    if isinstance(parameterSymbol, NonTerminal):
+                        #  check recursively if symbol is in the list of child symbols
+                        if cast(NonTerminal, parameterSymbol).uses(symbol, bnf):
+                            atLeastOneCompletionForCurrentParameter = True
+                            break
+
+                if not atLeastOneCompletionForCurrentParameter:
+                    self.parameterizedCompletion.next()
+                    return
+            else:
+                print("no completions")
+        else:
+            print("parameterized completion = None")
 
         if len(autocompletions) == 1:
             completion = autocompletions[0].getCompletion()
@@ -470,6 +515,15 @@ class ParameterizedCompletionContext(QObject):
     def getNextParameterIndexForCursorPosition(self, pos: int) -> int:
         return next((i for i, param in enumerate(self._parameters) if pos < param.highlight.cursor.anchor() + 1), -1)
 
+    def getParamIndexForCursorPosition(self, pos: int) -> int:
+        return next((i for i, param in enumerate(self._parameters) if
+              param.highlight.cursor.anchor() + 1 <= pos <= param.highlight.cursor.position()), -1)
+
+    def getCurrentParameter(self) -> Param:
+        idx = self.getParamIndexForCursorPosition(self._tc.textCursor().position())
+        print("Current paramter index is " + str(idx))
+        return self.parameters[idx] if idx >= 0 else None
+
     def next(self) -> None:
         caret = self._tc.textCursor().position()
         idx = self.getNextParameterIndexForCursorPosition(caret)
@@ -604,6 +658,10 @@ class Param:
     @property
     def highlight(self):
         return self._highlight
+
+    @property
+    def autocompletion(self):
+        return self._autocompletion
 
     def __str__(self):
         c = self._highlight.cursor

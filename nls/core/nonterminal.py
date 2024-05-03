@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from typing import Set, List, cast
+
+from nls.core.production import Production
 from nls.core.symbol import Symbol
 from nls.util.randomstring import RandomString
 from nls.core.named import Named
@@ -26,6 +29,24 @@ class NonTerminal(Symbol):
 
     def withName(self, name: str = None):
         return Named[NonTerminal](self, name)
+
+    def uses(self, symbol: Symbol, bnf: BNF, progressing: Set[Production]=None) -> bool:
+        from nls.core.bnf import BNF
+        if progressing is None:
+            progressing = set()
+        productions: List[Production] = bnf.getProductions(self)
+        for p in productions:
+            if p in progressing:
+                continue
+            progressing.add(p)
+            rhs: List[Symbol] = p.right
+            for rSym in rhs:
+                if rSym == symbol:
+                    return True
+                elif isinstance(rSym, NonTerminal):
+                    if cast(NonTerminal, rSym).uses(symbol, bnf, progressing):
+                        return True
+        return False
 
     def __str__(self) -> str:
         return "<" + self._symbol + ">"

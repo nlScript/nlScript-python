@@ -18,6 +18,14 @@ class Autocompletion(ABC):
         self._forSymbol = pn.symbol if pn is not None else forSymbol
         self._alreadyEntered = ""
 
+    @property
+    def symbolName(self) -> str:
+        return self._symbolName
+
+    @property
+    def forSymbol(self):
+        return self._forSymbol
+
     @staticmethod
     def literal(pn: DefaultParsedNode, literals: [str], prefix="", suffix=""):
         return [Literal(pn=pn, s=prefix + literal + suffix) for literal in literals]
