@@ -1,26 +1,27 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, List, Dict
+from typing import TYPE_CHECKING, Callable, List, Dict, cast
 
 from abc import ABC, abstractmethod
 
-from nls.core.autocompletion import Autocompletion, EntireSequence
+from nls.core.autocompletion import Autocompletion, EntireSequence, Purpose
 from nls.core.bnf import BNF
+from nls.core.defaultparsednode import DefaultParsedNode
 from nls.core.lexer import Lexer
 from nls.core.production import Production
 from nls.core.symbol import Symbol
 from nls.ebnf import ebnfparsednodefactory
 from nls.ebnf.sequence import Sequence
 from nls.util.completepath import CompletePath
+from nls.parsednode import ParsedNode
 
 if TYPE_CHECKING:
-    from nls.parsednode import ParsedNode
     from nls.ebnf.ebnfcore import EBNFCore
 
 
 class IAutocompleter(ABC):
     @abstractmethod
-    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> List[Autocompletion] or None:
+    def getAutocompletion(self, pn: DefaultParsedNode, justCheck: bool) -> List[Autocompletion] or None:
         pass
 
 
@@ -33,7 +34,7 @@ class Autocompleter(IAutocompleter):
 
 
 class DefaultInlineAutocompleter(IAutocompleter):
-    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> List[Autocompletion] or None:
+    def getAutocompletion(self, pn: DefaultParsedNode, justCheck: bool) -> List[Autocompletion] or None:
         alreadyEntered = pn.getParsedString()
         if len(alreadyEntered) > 0:
             return Autocompletion.veto(pn)
@@ -52,12 +53,12 @@ class EntireSequenceAutocompleter(IAutocompleter):
         self._ebnf = ebnf
         self._symbol2Autocompletion = symbol2Autocompletion
 
-    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> List[Autocompletion] or None:
+    def getAutocompletion(self, pn: DefaultParsedNode, justCheck: bool) -> List[Autocompletion] or None:
         EntireSequenceAutocompleter.calledNTimes += 1
         import nls.core.rdparser
         alreadyEntered = pn.getParsedString()
 
-        sequence = pn.getRule()
+        sequence = cast(ParsedNode, pn).getRule()
         children: List[Symbol] = sequence.children
 
         entireSequenceCompletion = EntireSequence(pn)
@@ -86,8 +87,12 @@ class EntireSequenceAutocompleter(IAutocompleter):
             self._symbol2Autocompletion[key] = autocompletionsForChild
             entireSequenceCompletion.add(autocompletionsForChild)
 
+        # avoid to call getCompletion() more often than necessary
+        if len(alreadyEntered) == 0:
+            return entireSequenceCompletion.asArray()
+
         try:
-            idx = entireSequenceCompletion.getCompletion().index("${")
+            idx = entireSequenceCompletion.getCompletion(Purpose.FOR_INSERTION).index("${")
         except ValueError:
             return entireSequenceCompletion.asArray()
 
@@ -101,7 +106,7 @@ class PathAutocompleter(IAutocompleter):
     def __init__(self):
         pass
 
-    def getAutocompletion(self, pn: ParsedNode, justCheck: bool) -> List[Autocompletion] or None:
+    def getAutocompletion(self, pn: DefaultParsedNode, justCheck: bool) -> List[Autocompletion] or None:
         if justCheck:
             return Autocompletion.doesAutocomplete(pn)
         completion: List[str] = CompletePath.getCompletion(pn.getParsedString())

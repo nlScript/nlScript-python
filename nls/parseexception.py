@@ -7,7 +7,7 @@ from nls.core.lexer import Lexer
 if TYPE_CHECKING:
     from nls.core.defaultparsednode import DefaultParsedNode
     from nls.core.bnf import BNF
-    from nls.core.autocompletion import Autocompletion
+    from nls.core.autocompletion import Autocompletion, Purpose
     from nls.core.rdparser import RDParser
 
 
@@ -65,7 +65,7 @@ class ParseException(Exception):
             errorMessage += " "
         errorMessage += "^" + nl
 
-        exString: List[str] = list(map(lambda ac: ac.completion, expectations))
+        exString: List[str] = list(map(lambda ac: ac.getCompletion(Purpose.FOR_INSERTION), expectations))
         errorMessage += "Expected " + str(exString)
 
         return errorMessage

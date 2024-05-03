@@ -2,8 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nls.core.named import Named
-from nls.core.terminal import Terminal, Literal
-
+from nls.core.terminal import Literal
 
 if TYPE_CHECKING:
     from typing import List
@@ -47,19 +46,20 @@ class DefaultParsedNode:
         return self.getAutocompletion(True) is not None
 
     def getAutocompletion(self, justCheck: bool) -> List[Autocompletion] or None:
-        if self._symbol is None:
-            return None
-
         from nls.core.autocompletion import Autocompletion
 
-        if isinstance(self._symbol, Literal):
-            return Autocompletion.literal(self, [self._symbol.symbol])
+        symbol: Symbol = self.symbol
+        if symbol is None:
+            return None
+
+        if isinstance(symbol, Literal):
+            return Autocompletion.literal(pn=self, literals=[symbol.symbol])
 
         name: str = self.name
         if name == Named.UNNAMED:
-            name = self.symbol.symbol
+            name = symbol.symbol
 
-        if isinstance(self._symbol, Terminal):
+        if symbol.isTerminal():
             return Autocompletion.veto(self) if len(self.getParsedString()) > 0 else Autocompletion.parameterized(self, name)
 
         return None

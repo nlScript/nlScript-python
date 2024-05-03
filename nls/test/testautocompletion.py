@@ -2,7 +2,7 @@ from typing import List, cast
 
 from nls.autocompleter import Autocompleter
 from nls.core import graphviz
-from nls.core.autocompletion import Autocompletion
+from nls.core.autocompletion import Autocompletion, Purpose
 from nls.core.bnf import BNF
 from nls.core.lexer import Lexer
 from nls.core.nonterminal import NonTerminal
@@ -41,7 +41,7 @@ def test02():
     autocompletions: List[Autocompletion] = []
     parser.parse("The first digit of the number is ", autocompletions)
     assertEquals(1, len(autocompletions))
-    assertEquals("${first}", autocompletions[0].getCompletion())
+    assertEquals("${first}", autocompletions[0].getCompletion(Purpose.FOR_INSERTION))
 
 
 def test03():
@@ -50,7 +50,7 @@ def test03():
     autocompletions: List[Autocompletion] = []
     parser.parse("", autocompletions)
     assertEquals(2, len(autocompletions))
-    assertEquals("Define the output path", autocompletions[1].getCompletion())
+    assertEquals("Define the output path", autocompletions[1].getCompletion(Purpose.FOR_INSERTION))
 
 
 def test04():
@@ -100,7 +100,7 @@ def test05():
 
     expected: List[str] = ["DAPI", "A488"]
 
-    assertEquals(expected, [a.getCompletion() for a in autocompletions])
+    assertEquals(expected, [a.getCompletion(Purpose.FOR_INSERTION) for a in autocompletions])
 
 
 def test06():
@@ -131,7 +131,7 @@ def test06():
     print(pn.matcher.state)
     assertEquals(ParsingState.END_OF_INPUT, pn.matcher.state)
     assertEquals(1, len(autocompletions))
-    assertEquals("Define channel", autocompletions[0].getCompletion())
+    assertEquals("Define channel", autocompletions[0].getCompletion(Purpose.FOR_INSERTION))
 
 
 def test07():
@@ -153,11 +153,11 @@ def test07():
     root = parser.parse("Excite with 10% at 3", autocompletions)
     assertEquals(ParsingState.END_OF_INPUT, root.matcher.state)
     assertEquals(1, len(autocompletions))
-    assertEquals("385nm", autocompletions[0].getCompletion())
+    assertEquals("385nm", autocompletions[0].getCompletion(Purpose.FOR_INSERTION))
 
     autocompletions.clear()
     root = parser.parse("Excite with 10% at ", autocompletions)
-    print("autocompletions: " + str([a.getCompletion() for a in autocompletions]))
+    print("autocompletions: " + str([a.getCompletion(Purpose.FOR_INSERTION) for a in autocompletions]))
 
 
 def test08():
@@ -171,9 +171,9 @@ def test08():
     root = parser.parse("My favorite color is ", autocompletions)
     assertEquals(ParsingState.END_OF_INPUT, root.matcher.state)
     assertEquals(3, len(autocompletions))
-    assertEquals("blue", autocompletions[0].getCompletion())
-    assertEquals("green", autocompletions[1].getCompletion())
-    assertEquals("(${r}, ${g}, ${b})", autocompletions[2].getCompletion())
+    assertEquals("blue", autocompletions[0].getCompletion(Purpose.FOR_INSERTION))
+    assertEquals("green", autocompletions[1].getCompletion(Purpose.FOR_INSERTION))
+    assertEquals("(${r}, ${g}, ${b})", autocompletions[2].getCompletion(Purpose.FOR_INSERTION))
 
 
 def test09():
@@ -189,7 +189,7 @@ def test09():
     autocompletions: List[Autocompletion] = []
     root: ParsedNode = parser.parse("Define channel 'D", autocompletions)
 
-    print("autocompletions = " + str([ac.getCompletion() for ac in autocompletions]))
+    print("autocompletions = " + str([ac.getCompletion(Purpose.FOR_INSERTION) for ac in autocompletions]))
 
 
 def test(inp: str, expectedCompletion: List[str]) -> None:
@@ -209,7 +209,7 @@ def test(inp: str, expectedCompletion: List[str]) -> None:
 
 
 def getCompletionStrings(autocompletions: List[Autocompletion]) -> List[str]:
-    return list(map(lambda ac: ac.getCompletion() + " (" + ac.getAlreadyEnteredText() + ")", autocompletions))
+    return list(map(lambda ac: ac.getCompletion(Purpose.FOR_INSERTION) + " (" + ac.getAlreadyEnteredText() + ")", autocompletions))
 
 
 def makeGrammar() -> BNF:

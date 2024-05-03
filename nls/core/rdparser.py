@@ -9,7 +9,7 @@ from nls.autocompleter import IAutocompleter
 from nls.core.bnf import BNF
 from nls.core.nonterminal import NonTerminal
 from nls.core.terminal import Terminal
-from nls.core.autocompletion import Autocompletion, Veto
+from nls.core.autocompletion import Autocompletion, Veto, Purpose
 
 import sys
 
@@ -108,17 +108,17 @@ class RDParser:
     def addAutocompletions(self, autocompletingParent: DefaultParsedNode, autocompletions: List[Autocompletion or None]) -> bool:
         autocompletingParentStart = autocompletingParent.matcher.pos
         alreadyEntered = self._lexer.substring(autocompletingParentStart)
-        completion: List[Autocompletion] or None = autocompletingParent.getAutocompletion(False)
-        if completion is not None and len(completion) > 0:
+        completion: List[Autocompletion] = autocompletingParent.getAutocompletion(False)
+        if completion is not None:
             for c in completion:
-                if c is None or len(c.getCompletion()) == 0:
+                if c is None or c.isEmptyLiteral():
                     continue
                 if isinstance(c, Veto):
                     autocompletions.clear()
                     return True
                 c.setAlreadyEnteredText(alreadyEntered)
-                ccomp = c.getCompletion()
-                if not any(map(lambda x: x.getCompletion() == ccomp, autocompletions)):
+                ccomp = c.getCompletion(Purpose.FOR_MENU)
+                if not any(map(lambda x: x.getCompletion(Purpose.FOR_MENU) == ccomp, autocompletions)):
                     autocompletions.append(c)
 
     def parseRecursive(self, symbolSequence: SymbolSequence, endOfInput: List[SymbolSequence]) -> SymbolSequence:

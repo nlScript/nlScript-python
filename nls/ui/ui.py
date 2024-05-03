@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QCompleter, QPlainTextEdit, QApplication, QTextEdit,
     QWidget, QSplitter, QPushButton, QVBoxLayout
 
 from nls.core import graphviz
-from nls.core.autocompletion import Autocompletion, Literal, Parameterized, EntireSequence
+from nls.core.autocompletion import Autocompletion, Literal, Parameterized, EntireSequence, Purpose
 from nls.core.bnf import BNF
 from nls.core.matcher import Matcher
 from nls.core.nonterminal import NonTerminal
@@ -222,8 +222,10 @@ class AutocompletionContext(CodeEditor):
         # select the previous len(completionPrefix) characters:
         tc.movePosition(QTextCursor.PreviousCharacter, QTextCursor.KeepAnchor, len(self.completer.completionPrefix()))
 
+        repl: str = completion.getCompletion(Purpose.FOR_INSERTION)
+
         try:
-            completion.getCompletion().index("${")  # throws ValueError if '${' does not exist in completion
+            repl.index("${")  # throws ValueError if '${' does not exist in completion
             self.cancelParameterizedCompletion()
             self.parameterizedCompletion = ParameterizedCompletionContext(tc=self)
             self.parameterizedCompletion.parameterChanged.connect(self.parameterChanged)
@@ -231,7 +233,7 @@ class AutocompletionContext(CodeEditor):
         except ValueError:
             # self.cancelParameterizedCompletion()
             tc.removeSelectedText()
-            tc.insertText(completion.getCompletion())
+            tc.insertText(repl)
             self.completer.popup().hide()
             if cursorIsAtEnd:
                 self.autocomplete()
@@ -371,8 +373,7 @@ class AutocompletionContext(CodeEditor):
             print("parameterized completion = None")
 
         if len(autocompletions) == 1:
-            completion = autocompletions[0].getCompletion()
-            if autoinsertSingleOption or completion.find("${") == -1:
+            if autoinsertSingleOption or isinstance(autocompletions[0], Literal):
                 self.completer.setCompletions(autocompletions)
                 alreadyEntered = autocompletions[0].getAlreadyEnteredText()
                 self.completer.setCompletionPrefix(alreadyEntered)
@@ -381,21 +382,6 @@ class AutocompletionContext(CodeEditor):
             self.completer.setCompletions(autocompletions)
             alreadyEntered = autocompletions[0].getAlreadyEnteredText()
             self.completer.setCompletionPrefix(alreadyEntered)
-
-            if False:
-                remainingText = entireText[anchor:]
-                matchingLength = 0
-                for ac in autocompletions:
-                    remainingCompletion = ac.getCompletion()[len(alreadyEntered):]
-                    if remainingText.startswith(remainingCompletion):
-                        matchingLength = len(remainingCompletion)
-                        break
-
-                if matchingLength > 0:
-                    cursor = self.textCursor()
-                    cursor.setPosition(anchor)
-                    cursor.movePosition(QTextCursor.Right, QTextCursor.KeepAnchor, matchingLength)
-                    self.setTextCursor(cursor)
 
             popup = self.completer.popup()
             popup.setCurrentIndex(self.completer.completionModel().index(0, 0))
@@ -435,9 +421,9 @@ class ACPopup(QCompleter):
         self._completions = completions
 
         def printNice(c: Autocompletion) -> str:
-            ret = c.getCompletion()
-            parsedParams = []
-            ParameterizedCompletionContext.parseParameters(c, parsedParams)
+            ret = c.getCompletion(Purpose.FOR_MENU)
+            # parsedParams = []
+            # ParameterizedCompletionContext.parseParameters(c, parsedParams)
             if ret.startswith("\n"):
                 ret = "<new line>"  # "<strong>new</strong> line"
             if ret == "":
@@ -577,7 +563,7 @@ class ParameterizedCompletionContext(QObject):
     @staticmethod
     def parseParameters(autocompletion: Autocompletion, ret: List[ParsedParam], offset: int = 0) -> str:
         if isinstance(autocompletion, Literal):
-            return autocompletion.getCompletion()
+            return autocompletion.getCompletion(Purpose.FOR_INSERTION)
 
         if isinstance(autocompletion, Parameterized):
             s = cast(Parameterized, autocompletion).paramName
@@ -601,7 +587,7 @@ class ParameterizedCompletionContext(QObject):
                 elif n == 1:
                     single: Autocompletion = autocompletions[0]
                     if isinstance(single, Literal):
-                        insertionString += single.getCompletion()
+                        insertionString += single.getCompletion(Purpose.FOR_INSERTION)
                     elif isinstance(single, Parameterized):
                         parameterized: Parameterized = cast(Parameterized, single)
                         s = parameterized.paramName
@@ -611,7 +597,7 @@ class ParameterizedCompletionContext(QObject):
                         insertionString += s
                     elif isinstance(single, EntireSequence):
                         entire: EntireSequence = cast(EntireSequence, single)
-                        offs: int = len(insertionString)
+                        offs: int = offset + len(insertionString)
                         s = ParameterizedCompletionContext.parseParameters(entire, ret, offs)
                         insertionString += s
                     else:

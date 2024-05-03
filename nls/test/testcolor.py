@@ -4,6 +4,7 @@ from typing import cast
 
 from PyQt5.QtWidgets import QApplication
 
+from nls.core.autocompletion import Purpose
 from nls.core.parsingstate import ParsingState
 from nls.evaluator import Evaluator
 from nls.parsednode import ParsedNode
@@ -27,7 +28,7 @@ def test01():
 
     autocompletions = []
     root = hlp.parse("My favorite color is ", autocompletions)
-    actual = list(map(lambda a: a.completion, autocompletions))
+    actual = list(map(lambda a: a.getCompletion(Purpose.FOR_INSERTION), autocompletions))
     expected = [
         "(${red}, ${green}, ${blue})",
         "black",
@@ -68,9 +69,9 @@ if __name__ == "__main__":
     hlp.defineSentence("My favorite color is {c:color}.")
     # hlp.defineSentence("My favorite color is {c:int}.", Evaluator(lambda pn: None))
     hlp.compile()
-    from nls.ui.test3 import AwesomeTextEdit
+    from nls.ui.ui import ACEditor
 
     app = QApplication([])
-    te = AwesomeTextEdit(parser=hlp)
+    te = ACEditor(parser=hlp)
     te.show()
     exit(app.exec_())
