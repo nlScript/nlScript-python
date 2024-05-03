@@ -47,8 +47,6 @@ class RDParser:
         parsedSequence = self.parseRecursive(seq, endOfInput)
         if autocompletions is not None:
             self.collectAutocompletions(endOfInput, autocompletions)
-        if autocompletions is not None and len(autocompletions) > 0 and autocompletions[-1] is None:
-            del(autocompletions[-1])
         last: List[DefaultParsedNode or None] = [None]
         ret = self.createParsedTree(parsedSequence, last)
         ret = self.buildAst(ret)
@@ -81,8 +79,10 @@ class RDParser:
             else:
                 key = autocompletingParent.symbol.symbol
             if key not in done:
-                self.addAutocompletions(autocompletingParent, autocompletions)
+                veto: bool = self.addAutocompletions(autocompletingParent, autocompletions)
                 done.add(key)
+                if veto:
+                    break
 
     def collectAutocompletingParents(self, symbolSequence: SymbolSequence, autocompletingParents: List[DefaultParsedNode]):
         last: List[DefaultParsedNode or None] = [None]
@@ -105,9 +105,7 @@ class RDParser:
         if autocompletingParent is not None:
             autocompletingParents.append(autocompletingParent)
 
-    def addAutocompletions(self, autocompletingParent: DefaultParsedNode, autocompletions: List[Autocompletion or None]):
-        if len(autocompletions) > 0 and autocompletions[-1] is None:
-            return
+    def addAutocompletions(self, autocompletingParent: DefaultParsedNode, autocompletions: List[Autocompletion or None]) -> bool:
         autocompletingParentStart = autocompletingParent.matcher.pos
         alreadyEntered = self._lexer.substring(autocompletingParentStart)
         completion: List[Autocompletion] or None = autocompletingParent.getAutocompletion(False)
@@ -116,10 +114,8 @@ class RDParser:
                 if c is None or len(c.getCompletion()) == 0:
                     continue
                 if isinstance(c, Veto):
-                    # autocompletions.clear()
-                    # TODO clear it here and only add the veto
-                    autocompletions.append(None)  # to prevent further autocompletion
-                    return
+                    autocompletions.clear()
+                    return True
                 c.setAlreadyEnteredText(alreadyEntered)
                 ccomp = c.getCompletion()
                 if not any(map(lambda x: x.getCompletion() == ccomp, autocompletions)):
