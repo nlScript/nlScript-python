@@ -90,6 +90,11 @@ class Parser:
             newRule.setAutocompleter(autocompleterToUse)
 
         return newRule.withName(typ)
+    
+    def undefineType(self, atype: str) -> None:
+        unitsSymbol: NonTerminal = cast(NonTerminal, self.targetGrammar.getSymbol(atype))
+        self.targetGrammar.removeRules(unitsSymbol)
+        self._compiled = False
 
     def compile(self, symbol: Symbol = None) -> None:
         if symbol is None:
