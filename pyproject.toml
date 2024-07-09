@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nlScript"
+version = "0.1.0"
+authors = [
+  { name="Benjamin Schmid", email="bene.schmid@gmail.com" },
+]
+description = "A framework for creating scripting interfaces based on natural syntax."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    'PyQt5'
+]
+
+[project.urls]
+Homepage = "https://github.com/nlScript/nlScript-python"
+Issues = "https://github.com/nlScript/nlScript-python/issues"
+
+
