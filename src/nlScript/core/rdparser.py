@@ -2,10 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, cast, Set
 
-from nlScript.core.graphviz import toVizDotLink
 from nlScript.core.parsingstate import ParsingState
 from nlScript.core.matcher import Matcher
-from nlScript.autocompleter import IAutocompleter
 from nlScript.core.bnf import BNF
 from nlScript.core.nonterminal import NonTerminal
 from nlScript.core.terminal import Terminal

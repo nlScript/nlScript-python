@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, cast
 
 from nlScript.ebnf.rule import Rule
-from nlScript.core.production import AstBuilder, ExtensionListener, DEFAULT_ASTBUILDER
+from nlScript.core.production import ExtensionListener, DEFAULT_ASTBUILDER
 from nlScript.parsednode import ParsedNode
 
 if TYPE_CHECKING:

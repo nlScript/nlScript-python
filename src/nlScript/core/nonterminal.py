@@ -31,7 +31,6 @@ class NonTerminal(Symbol):
         return Named[NonTerminal](self, name)
 
     def uses(self, symbol: Symbol, bnf: BNF, progressing: Set[Production]=None) -> bool:
-        from nlScript.core.bnf import BNF
         if progressing is None:
             progressing = set()
         productions: List[Production] = bnf.getProductions(self)

@@ -3,11 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List
 
 from nlScript.core.lexer import Lexer
+from nlScript.core.autocompletion import Purpose
 
 if TYPE_CHECKING:
     from nlScript.core.defaultparsednode import DefaultParsedNode
     from nlScript.core.bnf import BNF
-    from nlScript.core.autocompletion import Autocompletion, Purpose
+    from nlScript.core.autocompletion import Autocompletion
     from nlScript.core.rdparser import RDParser
 
 

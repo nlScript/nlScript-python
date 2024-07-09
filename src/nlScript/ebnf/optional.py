@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, List, cast
 
 from nlScript.ebnf.rule import Rule
 from nlScript.evaluator import ALL_CHILDREN_EVALUATOR
-from nlScript.core.production import AstBuilder, ExtensionListener, DEFAULT_ASTBUILDER
+from nlScript.core.production import ExtensionListener, DEFAULT_ASTBUILDER
 from nlScript.parsednode import ParsedNode
 
 if TYPE_CHECKING:

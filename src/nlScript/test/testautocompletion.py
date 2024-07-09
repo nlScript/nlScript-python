@@ -192,6 +192,32 @@ def test09():
     print("autocompletions = " + str([ac.getCompletion(Purpose.FOR_INSERTION) for ac in autocompletions]))
 
 
+def test10():
+    parser = Parser()
+
+    units = ""
+
+    def parsingStarted():
+        nonlocal units
+        units = "mm"
+
+    parser.addParseStartListener(ParseStartListener(parsingStarted))
+
+    def getAutocompletion(pn, justCheck):
+        return Autocompletion.literal(pn, ["pixel(s)", units])
+
+    parser.defineType("units", "{unitstring:[a-zA-Z()]:+}",
+          evaluator=Evaluator(lambda pn: pn.getParsedString() != "pixel(s)"),
+          autocompleter=Autocompleter(getAutocompletion))
+
+    parser.defineSentence("Blur with a kernel of radius 5 {units:units}.",
+                          evaluator=None)
+
+    autocompletions: List[Autocompletion] = []
+    parser.parse("Blur with a kernel of radius 5 ", autocompletions)
+    print("autocompletions = " + str([ac.getCompletion(Purpose.FOR_INSERTION) for ac in autocompletions]))
+
+
 def test(inp: str, expectedCompletion: List[str]) -> None:
     print("Testing " + inp)
     grammar = makeGrammar()
@@ -236,6 +262,8 @@ def makeGrammar() -> BNF:
 
 
 if __name__ == "__main__":
+    test10()
+    test09()
     test08()
     test07()
     test06()

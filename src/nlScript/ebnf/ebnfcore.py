@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from nlScript.autocompleter import Autocompleter, DEFAULT_INLINE_AUTOCOMPLETER
+from nlScript.autocompleter import Autocompleter
 from nlScript.core.autocompletion import Autocompletion, EntireSequence
-from nlScript.core.terminal import WHITESPACE, literal, characterClass
+from nlScript.core.terminal import WHITESPACE, literal
 from nlScript.ebnf.join import Join
 from nlScript.ebnf.optional import Optional
 from nlScript.ebnf.orrule import Or
@@ -13,7 +13,7 @@ from nlScript.ebnf.plus import Plus
 from nlScript.ebnf.repeat import Repeat
 from nlScript.ebnf.sequence import Sequence
 from nlScript.ebnf.star import Star
-from nlScript.evaluator import FIRST_CHILD_EVALUATOR, Evaluator
+from nlScript.evaluator import FIRST_CHILD_EVALUATOR
 from nlScript.core.nonterminal import NonTerminal
 from nlScript.util.range import Range, STAR
 

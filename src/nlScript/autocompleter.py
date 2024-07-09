@@ -54,8 +54,9 @@ class EntireSequenceAutocompleter(IAutocompleter):
         self._symbol2Autocompletion = symbol2Autocompletion
 
     def getAutocompletion(self, pn: DefaultParsedNode, justCheck: bool) -> List[Autocompletion] or None:
+        import nlScript
+
         EntireSequenceAutocompleter.calledNTimes += 1
-        import nlScript.core.rdparser
         alreadyEntered = pn.getParsedString()
 
         sequence = cast(ParsedNode, pn).getRule()
