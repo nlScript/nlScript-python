@@ -14,6 +14,14 @@ It provides all the tools necessary for creating domain-specific languages with 
 
 
 
+## Installation
+With `pip`:
+```
+python -m -pip install --upgrade nlScript
+```
+
+
+
 ## Basic usage
 
 The Natural Language Scripting framework offers a convenient way to define the sentences your interface should understand, and provides an auto-completion enabled text editor for users to enter their instructions. The following code snippet shows how to create a parser, how to define a pattern for a sentence for it to parse, and how to display the editor:
