@@ -5,11 +5,11 @@ import time
 import traceback
 from typing import cast, List, Callable
 
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import Qt, QStringListModel, QRect, QObject, QEvent, QModelIndex, pyqtSignal, pyqtSlot, \
+from PySide2 import QtCore, QtGui
+from PySide2.QtCore import Qt, QStringListModel, QRect, QObject, QEvent, QModelIndex, Signal, Slot, \
     QThreadPool, QRunnable
-from PyQt5.QtGui import QTextCursor, QKeyEvent, QColor, QPalette, QFont
-from PyQt5.QtWidgets import QCompleter, QPlainTextEdit, QApplication, QTextEdit, QItemDelegate, QStyleOptionViewItem, \
+from PySide2.QtGui import QTextCursor, QKeyEvent, QColor, QPalette, QFont
+from PySide2.QtWidgets import QCompleter, QPlainTextEdit, QApplication, QTextEdit, QItemDelegate, QStyleOptionViewItem, \
     QWidget, QSplitter, QPushButton, QVBoxLayout
 
 from nlScript.core import graphviz
@@ -26,9 +26,9 @@ from nlScript.ui.codeeditor import CodeEditor
 
 
 class WorkerSignals(QObject):
-    finished = pyqtSignal()
-    error = pyqtSignal(tuple)
-    result = pyqtSignal(object)
+    finished = Signal()
+    error = Signal(tuple)
+    result = Signal(object)
 
 
 class Worker(QRunnable):
@@ -53,7 +53,7 @@ class Worker(QRunnable):
         self.kwargs = kwargs
         self.signals = WorkerSignals()
 
-    @pyqtSlot()
+    @Slot()
     def run(self):
         """
         Initialise the runner function with passed args, kwargs.
@@ -76,7 +76,7 @@ class Worker(QRunnable):
 
 class ACEditor(QWidget):
 
-    work_requested = pyqtSignal(int)
+    work_requested = Signal(int)
 
     def __init__(self, parser: Parser, parent=None):
         super(ACEditor, self).__init__(parent)
@@ -440,7 +440,7 @@ class ACPopup(QCompleter):
 
 
 class ParameterizedCompletionContext(QObject):
-    parameterChanged = QtCore.pyqtSignal(int, bool)
+    parameterChanged = QtCore.Signal(int, bool)
 
     def __init__(self, tc: CodeEditor):
         super().__init__(parent=tc)

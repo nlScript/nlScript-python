@@ -3,7 +3,7 @@ from __future__ import annotations
 import os.path
 from typing import cast, List
 
-from PyQt5.QtWidgets import QApplication
+from PySide2.QtWidgets import QApplication
 
 from nlScript.core.parsingstate import ParsingState
 from nlScript.evaluator import Evaluator

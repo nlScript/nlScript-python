@@ -1,9 +1,9 @@
 from typing import List
 
-from PyQt5 import QtGui
-from PyQt5.QtCore import QSize, QRect, Qt
-from PyQt5.QtGui import QPaintEvent, QColor, QTextFormat, QPainter, QTextBlock, QTextCursor, QTextCharFormat
-from PyQt5.QtWidgets import QPlainTextEdit, QWidget, QTextEdit
+from PySide2 import QtGui
+from PySide2.QtCore import QSize, QRect, Qt
+from PySide2.QtGui import QPaintEvent, QColor, QTextFormat, QPainter, QTextBlock, QTextCursor, QTextCharFormat
+from PySide2.QtWidgets import QPlainTextEdit, QWidget, QTextEdit
 
 
 # https://doc.qt.io/qt-6.2/qtwidgets-widgets-codeeditor-example.html

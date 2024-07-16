@@ -27,7 +27,7 @@ python -m -pip install --upgrade nlScript
 The Natural Language Scripting framework offers a convenient way to define the sentences your interface should understand, and provides an auto-completion enabled text editor for users to enter their instructions. The following code snippet shows how to create a parser, how to define a pattern for a sentence for it to parse, and how to display the editor:
 
 ```python
-# Needed for running a PyQt application
+# Needed for running a PySide2 application
 app = QApplication([])
 
 # Create an instance of the processing backend.
@@ -64,7 +64,7 @@ parser.defineSentence(
 editor = ACEditor(parser)
 editor.show()
 
-# Needed for running a PyQt application
+# Needed for running a PySide2 application
 exit(app.exec_())
 ```
 
@@ -104,5 +104,18 @@ Apply Gaussian blurring with a standard deviation of 1 pixel(s).
 * [Details how to define variables](https://nlscript.github.io/Bla/variables.html)
 * [Built-in types apart from `float`](https://nlscript.github.io/Bla/#built-in-types)
 * [More detail about custom types](https://nlscript.github.io/Bla/custom-types.html)
+
+
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+This project depends on PySide2, which is licensed under [LGPL-3.0 License](https://www.gnu.org/licenses/lgpl-3.0.html).
+
+Users are entitled to modify and replace the LGPL-licensed PySide2 library. For more details, please refer to the LGPL-3.0 license text included in the LICENSE file.
+
+If you need to install or modify PySide2, it can be obtained from:
+[PySide2 on PyPI](https://pypi.org/project/PySide2/)
 
 
