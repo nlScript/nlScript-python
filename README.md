@@ -109,7 +109,7 @@ Apply Gaussian blurring with a standard deviation of 1 pixel(s).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.txt) file for details.
 
 This project depends on PySide2, which is licensed under [LGPL-3.0 License](https://www.gnu.org/licenses/lgpl-3.0.html).
 
