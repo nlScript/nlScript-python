@@ -4,6 +4,7 @@ from typing import cast, List
 
 from PySide2.QtWidgets import QApplication
 
+from nlScript.core.autocompletion import Purpose
 from nlScript.core.parsingstate import ParsingState
 from nlScript.evaluator import Evaluator
 from nlScript.parsednode import ParsedNode
@@ -40,7 +41,7 @@ def test01():
 
     autocompletions = []
     hlp.parse("My birthday is in ", autocompletions)
-    print("autocompletions = " + str([a.completion for a in autocompletions]))
+    print("autocompletions = " + str([a.getCompletion(Purpose.FOR_INSERTION) for a in autocompletions]))
 
 
 def interactive():
