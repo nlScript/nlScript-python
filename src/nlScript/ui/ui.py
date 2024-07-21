@@ -31,7 +31,8 @@ class WorkerSignals(QObject):
     result = Signal(object)
 
 
-class Worker(QRunnable):
+# class Worker(QRunnable, QObject):
+class Worker(QtCore.QRunnable):
     """
     Worker thread
 
@@ -44,7 +45,6 @@ class Worker(QRunnable):
     :param kwargs: Keywords to pass to the callback function
 
     """
-
     def __init__(self, fn, *args, **kwargs):
         super(Worker, self).__init__()
         # Store constructor arguments (re-used for processing)
@@ -152,15 +152,19 @@ class ACEditor(QWidget):
         ))
         self.threadpool.start(worker)
 
+    def printMsg(self, text):
+        sys.stdout.write(text + '\n')
+        sys.stdout.flush()
+
     def run_fn(self, parser: Parser, textToEvaluate: str) -> None:
         self._beforeRun()
-        print("Parsing...")
+        self.printMsg("Parsing...")
         pn: ParsedNode = parser.parse(textToEvaluate)
-        print(graphviz.toVizDotLink(pn))
-        print("Evaluating...")
+        self.printMsg(graphviz.toVizDotLink(pn))
+        self.printMsg("Evaluating...")
         pn.evaluate()
         self._afterRun()
-        print("Done")
+        self.printMsg("Done")
 
 
 class ErrorHighlight:
