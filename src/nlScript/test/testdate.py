@@ -52,5 +52,5 @@ def interactive():
 
 
 if __name__ == "__main__":
-    # test01()
-    interactive()
+    test01()
+    # interactive()

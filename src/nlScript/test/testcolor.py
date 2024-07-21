@@ -63,8 +63,7 @@ def assertNotEquals(exp, real):
         raise Exception("Expected " + str(exp) + ", but got " + str(real))
 
 
-if __name__ == "__main__":
-    # test01()
+def interactive():
     hlp = Parser()
     hlp.defineSentence("My favorite color is {c:color}.")
     # hlp.defineSentence("My favorite color is {c:int}.", Evaluator(lambda pn: None))
@@ -75,3 +74,8 @@ if __name__ == "__main__":
     te = ACEditor(parser=hlp)
     te.show()
     exit(app.exec_())
+
+
+if __name__ == "__main__":
+    test01()
+

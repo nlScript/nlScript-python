@@ -49,4 +49,4 @@ def assertNotEquals(exp, real):
 
 if __name__ == "__main__":
     test01()
-    interactive()
+    # interactive()
