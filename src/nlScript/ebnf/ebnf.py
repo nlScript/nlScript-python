@@ -69,7 +69,7 @@ class EBNF(EBNFCore):
                             self.optional(None, self.SIGN.withName("sign")).withName("optional"),
                             self.plus(None, terminal.DIGIT.withName("digit")).withName("plus")])
 
-        ret.setEvaluator(Evaluator(lambda pn: int(pn.getParsedString())))
+        ret.setEvaluator(lambda pn: int(pn.getParsedString()))
         ret.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
         return ret
 
@@ -85,7 +85,7 @@ class EBNF(EBNFCore):
             time = pn.evaluate("time")
             return datetime.datetime.combine(date, time)
 
-        ret.setEvaluator(Evaluator(evaluate))
+        ret.setEvaluator(evaluate)
         ret.setAutocompleter(EntireSequenceAutocompleter(self, {}))
         return ret
 
@@ -106,7 +106,7 @@ class EBNF(EBNFCore):
                                   ).withName()
                             ])
 
-        ret.setEvaluator(Evaluator(lambda pn: float(pn.getParsedString())))
+        ret.setEvaluator(lambda pn: float(pn.getParsedString()))
         ret.setAutocompleter(DEFAULT_INLINE_AUTOCOMPLETER)
         return ret
 
@@ -136,25 +136,25 @@ class EBNF(EBNFCore):
             return Range(
                 int(pn.evaluateChildByIndex(0)),
                 int(pn.evaluateChildByIndex(1)))
-        ret.setEvaluator(Evaluator(evaluate))
+        ret.setEvaluator(evaluate)
         return ret
 
     def makeColor(self) -> Rule:
-        black       = self.sequence(None, [literal("black"       ).withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(  0,   0,   0)))
-        white       = self.sequence(None, [literal("white"       ).withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(255, 255, 255)))
-        red         = self.sequence(None, [literal("red"         ).withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(255,   0,   0)))
-        orange      = self.sequence(None, [literal("orange"      ).withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(255, 128,   0)))
-        yellow      = self.sequence(None, [literal("yellow"      ).withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(255, 255,   0)))
-        lawngreen   = self.sequence(None, [literal("lawn green"  ).withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(128, 255,   0)))
-        green       = self.sequence(None, [literal("green"       ).withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(  0, 255,   0)))
-        springgreen = self.sequence(None, [literal("spring green").withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(  0, 255, 180)))
-        cyan        = self.sequence(None, [literal("cyan"        ).withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(  0, 255, 255)))
-        azure       = self.sequence(None, [literal("azure"       ).withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(  0, 128, 255)))
-        blue        = self.sequence(None, [literal("blue"        ).withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(  0,   0, 255)))
-        violet      = self.sequence(None, [literal("violet"      ).withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(128,   0, 255)))
-        magenta     = self.sequence(None, [literal("magenta"     ).withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(255,   0, 255)))
-        pink        = self.sequence(None, [literal("pink"        ).withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(255,   0, 128)))
-        gray        = self.sequence(None, [literal("gray"        ).withName()]).setEvaluator(Evaluator(lambda pn: EBNF.rgb2int(128, 128, 128)))
+        black       = self.sequence(None, [literal("black"       ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(  0,   0,   0))
+        white       = self.sequence(None, [literal("white"       ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(255, 255, 255))
+        red         = self.sequence(None, [literal("red"         ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(255,   0,   0))
+        orange      = self.sequence(None, [literal("orange"      ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(255, 128,   0))
+        yellow      = self.sequence(None, [literal("yellow"      ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(255, 255,   0))
+        lawngreen   = self.sequence(None, [literal("lawn green"  ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(128, 255,   0))
+        green       = self.sequence(None, [literal("green"       ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(  0, 255,   0))
+        springgreen = self.sequence(None, [literal("spring green").withName()]).setEvaluator(lambda pn: EBNF.rgb2int(  0, 255, 180))
+        cyan        = self.sequence(None, [literal("cyan"        ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(  0, 255, 255))
+        azure       = self.sequence(None, [literal("azure"       ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(  0, 128, 255))
+        blue        = self.sequence(None, [literal("blue"        ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(  0,   0, 255))
+        violet      = self.sequence(None, [literal("violet"      ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(128,   0, 255))
+        magenta     = self.sequence(None, [literal("magenta"     ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(255,   0, 255))
+        pink        = self.sequence(None, [literal("pink"        ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(255,   0, 128))
+        gray        = self.sequence(None, [literal("gray"        ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(128, 128, 128))
 
         custom = self.tuple(None, self.INTEGER.withName(), ["red", "green", "blue"])
 
@@ -198,35 +198,35 @@ class EBNF(EBNFCore):
             literal(":").withName(),
             minute.withName("MM")
         ])
-        ret.setEvaluator(Evaluator(lambda pn: datetime.datetime.strptime(pn.getParsedString(), '%H:%M').time()))
+        ret.setEvaluator(lambda pn: datetime.datetime.strptime(pn.getParsedString(), '%H:%M').time())
         ret.setAutocompleter(EntireSequenceAutocompleter(self, {}))
         return ret
 
     def makeMonth(self) -> Rule:
         return self.orrule(self.MONTH_NAME, [
-            self.sequence(None, [literal("January")  .withName()]).setEvaluator(Evaluator(lambda pn: 0)).withName("january"),
-            self.sequence(None, [literal("February") .withName()]).setEvaluator(Evaluator(lambda pn: 1)).withName("february"),
-            self.sequence(None, [literal("March")    .withName()]).setEvaluator(Evaluator(lambda pn: 2)).withName("march"),
-            self.sequence(None, [literal("April")    .withName()]).setEvaluator(Evaluator(lambda pn: 3)).withName("april"),
-            self.sequence(None, [literal("Mai")      .withName()]).setEvaluator(Evaluator(lambda pn: 4)).withName("mai"),
-            self.sequence(None, [literal("June")     .withName()]).setEvaluator(Evaluator(lambda pn: 5)).withName("june"),
-            self.sequence(None, [literal("July")     .withName()]).setEvaluator(Evaluator(lambda pn: 6)).withName("july"),
-            self.sequence(None, [literal("August")   .withName()]).setEvaluator(Evaluator(lambda pn: 7)).withName("august"),
-            self.sequence(None, [literal("September").withName()]).setEvaluator(Evaluator(lambda pn: 8)).withName("september"),
-            self.sequence(None, [literal("October")  .withName()]).setEvaluator(Evaluator(lambda pn: 9)).withName("october"),
-            self.sequence(None, [literal("November") .withName()]).setEvaluator(Evaluator(lambda pn: 10)).withName("november"),
-            self.sequence(None, [literal("December") .withName()]).setEvaluator(Evaluator(lambda pn: 11)).withName("december"),
+            self.sequence(None, [literal("January")  .withName()]).setEvaluator(lambda pn: 0).withName("january"),
+            self.sequence(None, [literal("February") .withName()]).setEvaluator(lambda pn: 1).withName("february"),
+            self.sequence(None, [literal("March")    .withName()]).setEvaluator(lambda pn: 2).withName("march"),
+            self.sequence(None, [literal("April")    .withName()]).setEvaluator(lambda pn: 3).withName("april"),
+            self.sequence(None, [literal("Mai")      .withName()]).setEvaluator(lambda pn: 4).withName("mai"),
+            self.sequence(None, [literal("June")     .withName()]).setEvaluator(lambda pn: 5).withName("june"),
+            self.sequence(None, [literal("July")     .withName()]).setEvaluator(lambda pn: 6).withName("july"),
+            self.sequence(None, [literal("August")   .withName()]).setEvaluator(lambda pn: 7).withName("august"),
+            self.sequence(None, [literal("September").withName()]).setEvaluator(lambda pn: 8).withName("september"),
+            self.sequence(None, [literal("October")  .withName()]).setEvaluator(lambda pn: 9).withName("october"),
+            self.sequence(None, [literal("November") .withName()]).setEvaluator(lambda pn: 10).withName("november"),
+            self.sequence(None, [literal("December") .withName()]).setEvaluator(lambda pn: 11).withName("december"),
         ])
 
     def makeWeekday(self) -> Rule:
         return self.orrule(self.WEEKDAY_NAME, [
-            self.sequence(None, [literal("Monday")   .withName()]).setEvaluator(Evaluator(lambda pn: 0)) .withName("monday"),
-            self.sequence(None, [literal("Tuesday")  .withName()]).setEvaluator(Evaluator(lambda pn: 1)) .withName("tuesday"),
-            self.sequence(None, [literal("Wednesday").withName()]).setEvaluator(Evaluator(lambda pn: 2)) .withName("wednesday"),
-            self.sequence(None, [literal("Thursday") .withName()]).setEvaluator(Evaluator(lambda pn: 3)) .withName("thursday"),
-            self.sequence(None, [literal("Friday")   .withName()]).setEvaluator(Evaluator(lambda pn: 4)) .withName("friday"),
-            self.sequence(None, [literal("Saturday") .withName()]).setEvaluator(Evaluator(lambda pn: 5)) .withName("saturday"),
-            self.sequence(None, [literal("Sunday")   .withName()]).setEvaluator(Evaluator(lambda pn: 6)) .withName("sunday")
+            self.sequence(None, [literal("Monday")   .withName()]).setEvaluator(lambda pn: 0) .withName("monday"),
+            self.sequence(None, [literal("Tuesday")  .withName()]).setEvaluator(lambda pn: 1) .withName("tuesday"),
+            self.sequence(None, [literal("Wednesday").withName()]).setEvaluator(lambda pn: 2) .withName("wednesday"),
+            self.sequence(None, [literal("Thursday") .withName()]).setEvaluator(lambda pn: 3) .withName("thursday"),
+            self.sequence(None, [literal("Friday")   .withName()]).setEvaluator(lambda pn: 4) .withName("friday"),
+            self.sequence(None, [literal("Saturday") .withName()]).setEvaluator(lambda pn: 5) .withName("saturday"),
+            self.sequence(None, [literal("Sunday")   .withName()]).setEvaluator(lambda pn: 6) .withName("sunday")
         ])
 
     def makeDate(self) -> Rule:
@@ -252,7 +252,7 @@ class EBNF(EBNFCore):
             year.withName("year")
         ])
 
-        ret.setEvaluator(Evaluator(lambda pn: datetime.datetime.strptime(pn.getParsedString(), "%d %B %Y").date()))
+        ret.setEvaluator(lambda pn: datetime.datetime.strptime(pn.getParsedString(), "%d %B %Y").date())
         ret.setAutocompleter(EntireSequenceAutocompleter(self, dict()))
         return ret
 
@@ -265,6 +265,6 @@ class EBNF(EBNFCore):
                              literal("'").withName(),
                              innerPath.withName("path"),
                              literal("'").withName()])
-        path.setEvaluator(Evaluator(lambda pn: pn.evaluateChildByNames("path")))
+        path.setEvaluator(lambda pn: pn.evaluateChildByNames("path"))
         path.setAutocompleter(EntireSequenceAutocompleter(self, {}))
         return path

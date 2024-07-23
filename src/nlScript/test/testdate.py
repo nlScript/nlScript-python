@@ -33,7 +33,7 @@ def test01():
         assertEquals(datetime.date(2020, 10, 3), m)
         return None
 
-    hlp.defineSentence("My cat was born on {d:date}.", Evaluator(evaluate))
+    hlp.defineSentence("My cat was born on {d:date}.", evaluate)
 
     root = hlp.parse("My cat was born on 03 October 2020.", None)
     assertEquals(ParsingState.SUCCESSFUL, root.matcher.state)

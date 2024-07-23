@@ -29,14 +29,14 @@ def test01():
         assertEquals("0", d)
         return None
 
-    hlp.defineSentence("The first digit of my telephone number is {d:digit}.", Evaluator(evaluate1))
+    hlp.defineSentence("The first digit of my telephone number is {d:digit}.", evaluate1)
 
     def evaluate2(pn: ParsedNode) -> object:
         d = cast(List[object], pn.evaluate("d"))
         assertArrayEquals(["0", "9"], d)
         return None
 
-    hlp.defineSentence("The first two digits of my telephone number are {d:digit:2}.", Evaluator(evaluate2))
+    hlp.defineSentence("The first two digits of my telephone number are {d:digit:2}.", evaluate2)
 
     root = hlp.parse("The first digit of my telephone number is 0.", None)
     assertEquals(ParsingState.SUCCESSFUL, root.matcher.state)

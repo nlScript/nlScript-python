@@ -33,7 +33,7 @@ def test01():
         assertEquals(2, m)
         return None
 
-    hlp.defineSentence("My birthday is in {m:month}.", Evaluator(evaluate))
+    hlp.defineSentence("My birthday is in {m:month}.", evaluate)
 
     root = hlp.parse("My birthday is in March.", None)
     assertEquals(ParsingState.SUCCESSFUL, root.matcher.state)

@@ -35,7 +35,7 @@ def test01():
         assertEquals(homefolder, d)
         return None
 
-    hlp.defineSentence("My home folder is {d:path}.", Evaluator(evaluate))
+    hlp.defineSentence("My home folder is {d:path}.", evaluate)
 
     root = hlp.parse("My home folder is '" + homefolder + "'.", None)
     assertEquals(ParsingState.SUCCESSFUL, root.matcher.state)

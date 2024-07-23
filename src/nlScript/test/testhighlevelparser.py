@@ -343,21 +343,21 @@ def testExpression():
 def testDefineType():
     print("Test define type")
     hlp = Parser()
-    hlp.defineType("percentage", "{p:int} %", Evaluator(lambda pn: pn.evaluate("p")))
+    hlp.defineType("percentage", "{p:int} %", lambda pn: pn.evaluate("p"))
 
     def evaluate(pn: ParsedNode) -> object or None:
         percentage = cast(int, pn.evaluate("p"))
         assertEquals(5, percentage)
         print(percentage, " % left")
         return None
-    hlp.defineSentence("Now it is only {p:percentage}.", Evaluator(evaluate))
+    hlp.defineSentence("Now it is only {p:percentage}.", evaluate)
 
     def evaluate(pn: ParsedNode) -> object or None:
         percentage = cast(int, pn.evaluate("p"))
         assertEquals(38, percentage)
         print(percentage, " % left.")
         return None
-    hlp.defineSentence("There is still {p:percentage} left.", Evaluator(evaluate))
+    hlp.defineSentence("There is still {p:percentage} left.", evaluate)
 
     pn = hlp.parse(
             "There is still 38 % left.\n" +

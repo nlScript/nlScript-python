@@ -7,7 +7,6 @@ from nlScript.autocompleter import Autocompleter
 from nlScript.core.autocompletion import Autocompletion
 from nlScript.ebnf.ebnfparser import ParseStartListener
 from nlScript.ebnf.parselistener import ParseListener
-from nlScript.evaluator import Evaluator
 from nlScript.microscope.interpolator import Interpolator
 from nlScript.microscope.timeline import Timeline
 from nlScript.microscope.microscope import Microscope, LED, LEDSetting, Channel, Position, Lens, MagnificationChanger, \
@@ -41,125 +40,125 @@ class LanguageControl:
         parser = Parser()
         parser.addParseStartListener(ParseStartListener(clearChannelsAndRegions))
 
-        parser.defineType("led", "385nm", Evaluator(lambda e: LED.LED_385))
-        parser.defineType("led", "470nm", Evaluator(lambda e: LED.LED_470))
-        parser.defineType("led", "567nm", Evaluator(lambda e: LED.LED_567))
-        parser.defineType("led", "625nm", Evaluator(lambda e: LED.LED_625))
+        parser.defineType("led", "385nm", lambda e: LED.LED_385)
+        parser.defineType("led", "470nm", lambda e: LED.LED_470)
+        parser.defineType("led", "567nm", lambda e: LED.LED_567)
+        parser.defineType("led", "625nm", lambda e: LED.LED_625)
 
         parser.defineType("led-power", "{<led-power>:int}%",
-                          Evaluator(lambda e: e.evaluate("<led-power>")),
+                          lambda e: e.evaluate("<led-power>"),
                           True)
         parser.defineType("exposure-time", "{<exposure-time>:int}ms",
-                          Evaluator(lambda e: e.evaluate("<exposure-time>")),
+                          lambda e: e.evaluate("<exposure-time>"),
                           True)
         parser.defineType("led-setting", "{led-power:led-power} at {wavelength:led}",
-                          Evaluator(lambda e: LEDSetting(e.evaluate("wavelength"), e.evaluate("led-power"))),
+                          lambda e: LEDSetting(e.evaluate("wavelength"), e.evaluate("led-power")),
                           True)
         parser.defineType("another-led-setting", ", {led-setting:led-setting}",
-                          Evaluator(lambda e: e.evaluate("led-setting")),
+                          lambda e: e.evaluate("led-setting"),
                           True)
 
         parser.defineType("channel-name", "'{<name>:[A-Za-z0-9]:+}'",
-                          Evaluator(lambda e: e.getParsedString("<name>")),
+                          lambda e: e.getParsedString("<name>"),
                           True)
 
         parser.defineSentence(
             "Define channel {channel-name:channel-name}:" +
             "{\n  }excite with {led-setting:led-setting}{another-led-setting:another-led-setting:0-3}" +
             "{\n  }use an exposure time of {exposure-time:exposure-time}.",
-            Evaluator(lambda e: self._microscope.addChannel(
+            lambda e: self._microscope.addChannel(
                 Channel(
                     name=e.evaluate("channel-name"),
                     first=e.evaluate("led-setting"),
                     remaining=e.evaluate("another-led-setting"),
-                    exposureTime=e.evaluate("exposure-time"))))
+                    exposureTime=e.evaluate("exposure-time")))
         ).onSuccessfulParsed(ParseListener(lambda n: definedChannels.append(n.getParsedString("channel-name"))))
 
         # Define "Tile Scan 1" as a (w x h x d) region centered at (x, y, z)
         parser.defineType("region-name", "'{<region-name>:[a-zA-Z0-9]:+}'",
-                          Evaluator(lambda e: e.getParsedString("<region-name>")),
+                          lambda e: e.getParsedString("<region-name>"),
                           True)
 
         parser.defineType("region-dimensions", "{<width>:float} x {<height>:float} x {<depth>:float} microns",
-                          Evaluator(lambda e: [
+                          lambda e: [
                               e.evaluate("<width>"),
                               e.evaluate("<height>"),
-                              e.evaluate("<depth>")]),
+                              e.evaluate("<depth>")],
                           True)
 
         parser.defineType("region-center", "{<center>:tuple<float,x,y,z>} microns",
-                          Evaluator(lambda e: e.evaluate("<center>")),
+                          lambda e: e.evaluate("<center>"),
                           True)
 
         parser.defineSentence(
             "Define a position {region-name:region-name}:" +
             "{\n  }{region-dimensions:region-dimensions}" +
             "{\n  }centered at {region-center:region-center}.",
-            Evaluator(lambda e: self._microscope.addPosition(
+            lambda e: self._microscope.addPosition(
                 Position(
                     name=e.evaluate("region-name"),
                     center=e.evaluate("region-center"),
-                    extent=e.evaluate("region-dimensions"))))
+                    extent=e.evaluate("region-dimensions")))
         ).onSuccessfulParsed(ParseListener(lambda n: definedRegions.append(n.getParsedString("region-name"))))
 
         parser.defineSentence("Define the output folder at {folder:path}.", None)
 
         parser.defineType("defined-channels", "'{channel:[A-Za-z0-9]:+}'",
-                          evaluator=Evaluator(lambda e: e.getParsedString("channel")),
+                          evaluator=lambda e: e.getParsedString("channel"),
                           autocompleter=Autocompleter(lambda e, justCheck: Autocompletion.literal(e, definedChannels)))
 
         parser.defineType("defined-positions", "'{position:[A-Za-z0-9]:+}'",
-                          evaluator=Evaluator(lambda e: e.getParsedString("position")),
+                          evaluator=lambda e: e.getParsedString("position"),
                           autocompleter=Autocompleter(lambda e, justCheck: Autocompletion.literal(e, definedRegions)))
 
-        parser.defineType("time-unit", "second(s)", evaluator=Evaluator(lambda e: 1))
-        parser.defineType("time-unit", "minute(s)", evaluator=Evaluator(lambda e: 60))
-        parser.defineType("time-unit", "hour(s)",   evaluator=Evaluator(lambda e: 3600))
+        parser.defineType("time-unit", "second(s)", evaluator=lambda e: 1)
+        parser.defineType("time-unit", "minute(s)", evaluator=lambda e: 60)
+        parser.defineType("time-unit", "hour(s)",   evaluator=lambda e: 3600)
 
         parser.defineType("time-interval", "{n:float} {time-unit:time-unit}",
-                          Evaluator(lambda e: round(
+                          lambda e: round(
                               float(e.evaluate("n")) *         # n
-                              int(e.evaluate("time-unit")))),  # unit
+                              int(e.evaluate("time-unit"))),  # unit
                           True)
 
-        parser.defineType("repetition", "once", Evaluator(lambda e: [1, 0]))
+        parser.defineType("repetition", "once", lambda e: [1, 0])
         parser.defineType("repetition", "every {interval:time-interval} for {duration:time-interval}",
-                          Evaluator(lambda e: [e.evaluate("interval"), e.evaluate("duration")]),
+                          lambda e: [e.evaluate("interval"), e.evaluate("duration")],
                           True)
 
         parser.defineType("z-distance", "{z-distance:float} microns",
-                          Evaluator(lambda e: e.evaluate("z-distance")),
+                          lambda e: e.evaluate("z-distance"),
                           True)
 
-        parser.defineType("lens", "5x lens",  Evaluator(lambda e: Lens.FIVE))
-        parser.defineType("lens", "20x lens", Evaluator(lambda e: Lens.TWENTY))
+        parser.defineType("lens", "5x lens",  lambda e: Lens.FIVE)
+        parser.defineType("lens", "20x lens", lambda e: Lens.TWENTY)
 
-        parser.defineType("mag", "0.5x magnification changer", Evaluator(lambda e: MagnificationChanger.ZERO_FIVE))
-        parser.defineType("mag", "1.0x magnification changer", Evaluator(lambda e: MagnificationChanger.ONE_ZERO))
-        parser.defineType("mag", "2.0x magnification changer", Evaluator(lambda e: MagnificationChanger.TWO_ZERO))
+        parser.defineType("mag", "0.5x magnification changer", lambda e: MagnificationChanger.ZERO_FIVE)
+        parser.defineType("mag", "1.0x magnification changer", lambda e: MagnificationChanger.ONE_ZERO)
+        parser.defineType("mag", "2.0x magnification changer", lambda e: MagnificationChanger.TWO_ZERO)
 
-        parser.defineType("binning", "1 x 1", evaluator=Evaluator(lambda e: Binning.ONE))
-        parser.defineType("binning", "2 x 2", evaluator=Evaluator(lambda e: Binning.TWO))
-        parser.defineType("binning", "3 x 3", evaluator=Evaluator(lambda e: Binning.THREE))
-        parser.defineType("binning", "4 x 4", evaluator=Evaluator(lambda e: Binning.FOUR))
-        parser.defineType("binning", "5 x 5", evaluator=Evaluator(lambda e: Binning.FIVE))
+        parser.defineType("binning", "1 x 1", evaluator=lambda e: Binning.ONE)
+        parser.defineType("binning", "2 x 2", evaluator=lambda e: Binning.TWO)
+        parser.defineType("binning", "3 x 3", evaluator=lambda e: Binning.THREE)
+        parser.defineType("binning", "4 x 4", evaluator=lambda e: Binning.FOUR)
+        parser.defineType("binning", "5 x 5", evaluator=lambda e: Binning.FIVE)
 
-        parser.defineType("start", "At the beginning", Evaluator(lambda e: self._globalStart))
-        parser.defineType("start", "At {time:time}",   Evaluator(lambda e: e.evaluate("time")), True)
+        parser.defineType("start", "At the beginning", lambda e: self._globalStart)
+        parser.defineType("start", "At {time:time}",   lambda e: e.evaluate("time"), True)
         parser.defineType("start", "After {delay:time-interval}",
-                          Evaluator(lambda e: (datetime.combine(
+                          lambda e: (datetime.combine(
                                   date.today(),
                                   self._globalStart
-                              ) + timedelta(seconds=e.evaluate("delay"))).time()),
+                              ) + timedelta(seconds=e.evaluate("delay"))).time(),
                           True)
 
-        parser.defineType("position-list", "all positions", Evaluator(lambda e: [Microscope.ALL_POSITIONS]))
+        parser.defineType("position-list", "all positions", lambda e: [Microscope.ALL_POSITIONS])
         parser.defineType("position-list", "position(s) {positions:list<defined-positions>}",
-                          Evaluator(lambda e: e.evaluate("positions")))
+                          lambda e: e.evaluate("positions"))
 
-        parser.defineType("channel-list", "all channels", Evaluator(lambda e: [Microscope.ALL_CHANNELS]))
+        parser.defineType("channel-list", "all channels", lambda e: [Microscope.ALL_CHANNELS])
         parser.defineType("channel-list", "channel(s) {channels:list<defined-channels>}",
-                          Evaluator(lambda e: e.evaluate("channels")))
+                          lambda e: e.evaluate("channels"))
 
         def evaluateAcquisition(e: ParsedNode):
             tim: time = e.evaluate("start")
@@ -198,7 +197,7 @@ class LanguageControl:
             # "{\n  }with a resolution of {dx:float} x {dy:float} x {dz:float} microns.",
             "{\n  }with a plane distance of {dz:z-distance}" +
             "{\n  }using the {lens:lens} with the {magnification:mag} and a binning of {binning:binning}.",
-            Evaluator(evaluateAcquisition))
+            evaluateAcquisition)
 
         def enqueueInterpolator(plannedExecutionTime: datetime, interpolator: Interpolator, cycle: int):
             self._timeline.put(plannedExecutionTime, lambda: interpolator.interpolate(cycle))
@@ -234,7 +233,7 @@ class LanguageControl:
             "{start:start}{, }adjust..." +
             "{\n  }{repetition:repetition}" +
             "{\n  }the power of the {led:led} led of channel {channel:defined-channels} to {power:led-power}.",
-            Evaluator(evaluateAdjustLEDPower))
+            evaluateAdjustLEDPower)
 
         def evaluateAdjustExposureTime(e: ParsedNode):
             tim: time = e.evaluate("start")
@@ -266,7 +265,7 @@ class LanguageControl:
             "{start:start}{, }adjust..." +
             "{\n  }{repetition:repetition}" +
             "{\n  }the exposure time of channel {channel:defined-channels} to {exposure-time:exposure-time}.",
-            Evaluator(evaluateAdjustExposureTime))
+            evaluateAdjustExposureTime)
 
         parser.defineType("temperature", "{temperature:float}\u00B0C", None, True)
 
@@ -301,7 +300,7 @@ class LanguageControl:
             "{start:start}{, }adjust..." +
             "{\n  }{repetition:repetition}" +
             "{\n  }the CO2 concentration to {co2-concentration:co2-concentration}.",
-            Evaluator(evaluateAdjustCO2Concentration))
+            evaluateAdjustCO2Concentration)
 
         def evaluateAdjustTemperature(e: ParsedNode):
             tim: time = e.evaluate("start")
@@ -332,6 +331,6 @@ class LanguageControl:
             "{start:start}{, }adjust..." +
             "{\n  }{repetition:repetition}" +
             "{\n  }the temperature to {temperature:temperature}.",
-            Evaluator(evaluateAdjustTemperature))
+            evaluateAdjustTemperature)
 
         return parser

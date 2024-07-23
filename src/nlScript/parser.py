@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast, List, Dict
+from typing import TYPE_CHECKING, cast, List, Dict, Callable
 
 from nlScript.core.autocompletion import Autocompletion
 from nlScript.core.lexer import Lexer
@@ -68,8 +68,8 @@ class Parser:
             self,
             typ: str,
             pattern: str,
-            evaluator: Evaluator or None = None,
             autocompleter: Autocompleter or bool or None = None) -> NamedRule:
+            evaluator: Evaluator or Callable[[ParsedNode], object] or None = None,
         autocompleterToUse = autocompleter
         if type(autocompleter) is bool and autocompleter:
             autocompleterToUse = EntireSequenceAutocompleter(self._targetGrammar, self._symbol2Autocompletion)
@@ -115,12 +115,12 @@ class Parser:
         return g.orrule(
             "quantifier",
             [
-                g.sequence(None, [literal("?").withName()])          .setEvaluator(Evaluator(lambda pn: OPTIONAL)).withName("optional"),
-                g.sequence(None, [literal("+").withName()])          .setEvaluator(Evaluator(lambda pn: PLUS))    .withName("plus"),
-                g.sequence(None, [literal("*").withName()])          .setEvaluator(Evaluator(lambda pn: STAR))    .withName("star"),
-                g.sequence(None, [g.INTEGER_RANGE.withName("range")]).setEvaluator(FIRST_CHILD_EVALUATOR)         .withName("range"),
+                g.sequence(None, [literal("?").withName()])          .setEvaluator(lambda pn: OPTIONAL)  .withName("optional"),
+                g.sequence(None, [literal("+").withName()])          .setEvaluator(lambda pn: PLUS)      .withName("plus"),
+                g.sequence(None, [literal("*").withName()])          .setEvaluator(lambda pn: STAR)      .withName("star"),
+                g.sequence(None, [g.INTEGER_RANGE.withName("range")]).setEvaluator(FIRST_CHILD_EVALUATOR).withName("range"),
                 g.sequence(None, [g.INTEGER.withName("int")])
-                 .setEvaluator(Evaluator(lambda pn: Range(int(pn.evaluate(0)))))
+                 .setEvaluator(lambda pn: Range(int(pn.evaluate(0))))
                  .withName("fixed")
             ])
 
@@ -175,7 +175,7 @@ class Parser:
 
             return self._targetGrammar.list(None, namedEntry)
 
-        ret.setEvaluator(Evaluator(evaluate))
+        ret.setEvaluator(evaluate)
         return ret
 
     def tuple(self) -> Rule:
@@ -215,7 +215,7 @@ class Parser:
                 cast(NonTerminal, entry).withName()
             return self._targetGrammar.tuple(None, namedEntry, entryNames).tgt
 
-        ret.setEvaluator(Evaluator(evaluate))
+        ret.setEvaluator(evaluate)
         return ret
 
     def characterClass(self) -> Rule:
@@ -233,7 +233,7 @@ class Parser:
                 ).withName("plus"),
                 literal("]").withName()
             ]
-        ).setEvaluator(Evaluator(lambda pn: characterClass(pn.getParsedString())))
+        ).setEvaluator(lambda pn: characterClass(pn.getParsedString()))
         return ret
 
     def typ(self) -> Rule:
@@ -247,7 +247,7 @@ class Parser:
                 raise Exception("Unknow type '" + string + "'")
             return symbol
 
-        typ.setEvaluator(Evaluator(evaluate))
+        typ.setEvaluator(evaluate)
         return g.orrule(
             "type",
             [
@@ -329,7 +329,7 @@ class Parser:
 
             return namedSymbol
 
-        ret.setEvaluator(Evaluator(evaluate))
+        ret.setEvaluator(evaluate)
         return ret
 
     def noVariable(self) -> Rule:
@@ -352,7 +352,7 @@ class Parser:
                     ).withName("seq")
                 ).withName("tail")
             ])
-        ret.setEvaluator(Evaluator(lambda pn: literal(pn.getParsedString()).withName(pn.getParsedString())))
+        ret.setEvaluator(lambda pn: literal(pn.getParsedString()).withName(pn.getParsedString()))
         return ret
 
     def expression(self) -> Rule:
@@ -383,7 +383,7 @@ class Parser:
                         rhsList.append(self._targetGrammar.WHITESPACE_PLUS.withName("ws+"))
             return rhsList
 
-        ret.setEvaluator(Evaluator(evaluate))
+        ret.setEvaluator(evaluate)
         return ret
 
     def program(self) -> Rule:

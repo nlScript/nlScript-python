@@ -24,7 +24,7 @@ def test01():
         assertEquals(0, blue)
         return None
 
-    hlp.defineSentence("My favorite color is {text-color:color}.", Evaluator(evaluate))
+    hlp.defineSentence("My favorite color is {text-color:color}.", evaluate)
 
     autocompletions = []
     root = hlp.parse("My favorite color is ", autocompletions)

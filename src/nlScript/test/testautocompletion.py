@@ -179,7 +179,7 @@ def test08():
 def test09():
     parser = Parser()
     parser.defineType("channel-name", "'{<name>:[A-Za-z0-9]:+}'",
-                      Evaluator(lambda e: e.getParsedString("<name>")),
+                      lambda e: e.getParsedString("<name>"),
                       True)
 
     parser.defineSentence(
@@ -207,7 +207,7 @@ def test10():
         return Autocompletion.literal(pn, ["pixel(s)", units])
 
     parser.defineType("units", "{unitstring:[a-zA-Z()]:+}",
-          evaluator=Evaluator(lambda pn: pn.getParsedString() != "pixel(s)"),
+          evaluator=lambda pn: pn.getParsedString() != "pixel(s)",
           autocompleter=Autocompleter(getAutocompletion))
 
     parser.defineSentence("Blur with a kernel of radius 5 {units:units}.",

@@ -21,7 +21,7 @@ def test01():
         assertEquals(30, p.minute)
         return None
 
-    hlp.defineSentence("The pizza comes at {t:time}.", Evaluator(evaluate))
+    hlp.defineSentence("The pizza comes at {t:time}.", evaluate)
 
     root = hlp.parse("The pizza comes at 20:30.", None)
     assertEquals(ParsingState.SUCCESSFUL, root.matcher.state)

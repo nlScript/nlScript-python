@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import cast, List
 
 from nlScript.core.parsingstate import ParsingState
-from nlScript.evaluator import Evaluator
 from nlScript.parsednode import ParsedNode
 from nlScript.parser import Parser
 
@@ -29,14 +28,14 @@ def test01():
         assertEquals("B", l)
         return None
 
-    hlp.defineSentence("The first character of my name is {l:letter}.", Evaluator(evaluate1))
+    hlp.defineSentence("The first character of my name is {l:letter}.", evaluate1)
 
     def evaluate2(pn: ParsedNode) -> object:
         l = cast(List[object], pn.evaluate("l"))
         assertArrayEquals(["B", "e"], l)
         return None
 
-    hlp.defineSentence("The first two characters of my name are {l:letter:2}.", Evaluator(evaluate2))
+    hlp.defineSentence("The first two characters of my name are {l:letter:2}.", evaluate2)
 
     root = hlp.parse("The first character of my name is B.", None)
     assertEquals(ParsingState.SUCCESSFUL, root.matcher.state)

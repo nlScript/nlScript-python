@@ -29,14 +29,14 @@ def test01():
         assertEquals("f", d)
         return None
 
-    hlp.defineSentence("An arbitrary alphanumeric character: {c:[a-zA-Z0-9]}.", Evaluator(evaluate1))
+    hlp.defineSentence("An arbitrary alphanumeric character: {c:[a-zA-Z0-9]}.", evaluate1)
 
     def evaluate2(pn: ParsedNode) -> object:
         d = cast(List[object], pn.evaluate("c"))
         assertArrayEquals("f1", d)
         return None
 
-    hlp.defineSentence("Two arbitrary alphanumeric characters: {c:[a-zA-Z0-9]:2}.", Evaluator(evaluate2))
+    hlp.defineSentence("Two arbitrary alphanumeric characters: {c:[a-zA-Z0-9]:2}.", evaluate2)
 
     root = hlp.parse("An arbitrary alphanumeric character: f.", None)
     assertEquals(ParsingState.SUCCESSFUL, root.matcher.state)

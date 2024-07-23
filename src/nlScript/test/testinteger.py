@@ -17,7 +17,7 @@ def test01():
         assertEquals(35, p)
         return None
 
-    hlp.defineSentence("Now there are only {p:int}% left.", Evaluator(evaluate))
+    hlp.defineSentence("Now there are only {p:int}% left.", evaluate)
 
     autocompletions: List[Autocompletion] = []
     root = hlp.parse("Now there are only 5", autocompletions)

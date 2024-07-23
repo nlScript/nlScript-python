@@ -1,11 +1,12 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Callable
 from abc import abstractmethod
 
 from nlScript.core.nonterminal import NonTerminal
 from nlScript.core.representssymbol import RepresentsSymbol
 from nlScript.ebnf.ebnfproduction import EBNFProduction
 from nlScript.core.named import Named
+from nlScript.evaluator import Evaluator
 
 if TYPE_CHECKING:
     from nlScript.core.bnf import BNF
@@ -13,6 +14,7 @@ if TYPE_CHECKING:
     from nlScript.autocompleter import IAutocompleter
     from nlScript.evaluator import IEvaluator
     from nlScript.ebnf.parselistener import ParseListener
+    from nlScript.parsednode import ParsedNode
 
 
 class Rule(RepresentsSymbol):
@@ -43,7 +45,9 @@ class Rule(RepresentsSymbol):
     def getEvaluator(self) -> IEvaluator:
         return self._evaluator
 
-    def setEvaluator(self, evaluator: IEvaluator) -> Rule:
+    def setEvaluator(self, evaluator: IEvaluator or Callable[[ParsedNode], object]) -> Rule:
+        if isinstance(evaluator, Callable):
+            evaluator = Evaluator(evaluator)
         self._evaluator = evaluator
         return self
 
