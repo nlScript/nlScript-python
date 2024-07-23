@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from nlScript.evaluator import IEvaluator
     from nlScript.ebnf.parselistener import ParseListener
     from nlScript.parsednode import ParsedNode
+    from nlScript.core.autocompletion import Autocompletion
 
 
 class Rule(RepresentsSymbol):
@@ -54,7 +55,10 @@ class Rule(RepresentsSymbol):
     def getAutocompleter(self) -> IAutocompleter:
         return self._autocompleter
 
-    def setAutocompleter(self, autocompleter: IAutocompleter) -> Rule:
+    def setAutocompleter(self, autocompleter: IAutocompleter or Callable[[ParsedNode, bool], List[Autocompletion]]) -> Rule:
+        if isinstance(autocompleter, Callable):
+            from nlScript.autocompleter import Autocompleter
+            autocompleter = Autocompleter(autocompleter)
         self._autocompleter = autocompleter
         return self
 

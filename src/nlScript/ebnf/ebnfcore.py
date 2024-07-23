@@ -166,12 +166,12 @@ class EBNFCore:
                                   wsStar,
                                   literal(",").withName(),
                                   wsStar])
-        delimiter.setAutocompleter(Autocompleter(lambda pn, justCheck: Autocompletion.literal(pn, [""] if len(pn.getParsedString()) > 0 else [", "])))
+        delimiter.setAutocompleter(lambda pn, justCheck: Autocompletion.literal(pn, [""] if len(pn.getParsedString()) > 0 else [", "]))
         return self.joinWithRange(typ, child, None, None, delimiter.tgt, STAR)
 
     def tuple(self, typ: str or None, child: Named, names: List[str]) -> Rule:
         wsStar = self.star(None, WHITESPACE.withName()).withName("ws*")
-        wsStar.get().setAutocompleter(Autocompleter(lambda pn, justCheck: Autocompletion.literal(pn, [""])))
+        wsStar.get().setAutocompleter(lambda pn, justCheck: Autocompletion.literal(pn, [""]))
         jopen: Rule = self.sequence(None, [literal("(").withName("open"), wsStar])
         jclose: Rule = self.sequence(None, [wsStar, literal(")").withName("close")])
         delimiter: Rule = self.sequence(None, [wsStar, literal(",").withName("delimiter"), wsStar])
@@ -193,7 +193,7 @@ class EBNFCore:
             seq.addLiteral(jclose.tgt, "close", ")")
             return seq.asArray()
 
-        ret.setAutocompleter(Autocompleter(getAutocompletion))
+        ret.setAutocompleter(getAutocompletion)
         return ret
 
     def sequence(self, typ: str or None, children: List[Named]) -> Rule:

@@ -105,11 +105,11 @@ class LanguageControl:
 
         parser.defineType("defined-channels", "'{channel:[A-Za-z0-9]:+}'",
                           evaluator=lambda e: e.getParsedString("channel"),
-                          autocompleter=Autocompleter(lambda e, justCheck: Autocompletion.literal(e, definedChannels)))
+                          autocompleter=lambda e, justCheck: Autocompletion.literal(e, definedChannels))
 
         parser.defineType("defined-positions", "'{position:[A-Za-z0-9]:+}'",
                           evaluator=lambda e: e.getParsedString("position"),
-                          autocompleter=Autocompleter(lambda e, justCheck: Autocompletion.literal(e, definedRegions)))
+                          autocompleter=lambda e, justCheck: Autocompletion.literal(e, definedRegions))
 
         parser.defineType("time-unit", "second(s)", evaluator=lambda e: 1)
         parser.defineType("time-unit", "minute(s)", evaluator=lambda e: 60)

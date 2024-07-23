@@ -60,7 +60,7 @@ class Parser:
             self,
             pattern: str,
             evaluator: Evaluator or None = None,
-            autocompleter: Autocompleter or bool or None = None) -> NamedRule:
+            autocompleter: Autocompleter or Callable[[ParsedNode, bool], List[Autocompletion] or None] or bool or None = None) -> NamedRule:
 
         return self.defineType("sentence", pattern, evaluator, autocompleter)
 
@@ -68,8 +68,8 @@ class Parser:
             self,
             typ: str,
             pattern: str,
-            autocompleter: Autocompleter or bool or None = None) -> NamedRule:
             evaluator: Evaluator or Callable[[ParsedNode], object] or None = None,
+            autocompleter: Autocompleter or Callable[[ParsedNode, bool], List[Autocompletion] or None] or bool or None = None) -> NamedRule:
         autocompleterToUse = autocompleter
         if type(autocompleter) is bool and autocompleter:
             autocompleterToUse = EntireSequenceAutocompleter(self._targetGrammar, self._symbol2Autocompletion)

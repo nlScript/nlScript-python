@@ -84,7 +84,7 @@ def test05():
 
     parser.defineType("defined-channels", "'{channel:[A-Za-z0-9]:+}'",
             None,
-            Autocompleter(lambda pn, justCheck: Autocompletion.literal(pn, definedChannels)))
+            lambda pn, justCheck: Autocompletion.literal(pn, definedChannels))
 
     parser.defineSentence("Use channel {channel:defined-channels}.", None)
 
@@ -137,10 +137,10 @@ def test06():
 def test07():
     parser = Parser()
 
-    parser.defineType("led", "385nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: Autocompletion.literal(e, ["385nm"])))
-    parser.defineType("led", "470nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: Autocompletion.literal(e, ["470nm"])))
-    parser.defineType("led", "567nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: Autocompletion.literal(e, ["567nm"])))
-    parser.defineType("led", "625nm", evaluator=None, autocompleter=Autocompleter(lambda e, justCheck: Autocompletion.literal(e, ["625nm"])))
+    parser.defineType("led", "385nm", evaluator=None, autocompleter=lambda e, justCheck: Autocompletion.literal(e, ["385nm"]))
+    parser.defineType("led", "470nm", evaluator=None, autocompleter=lambda e, justCheck: Autocompletion.literal(e, ["470nm"]))
+    parser.defineType("led", "567nm", evaluator=None, autocompleter=lambda e, justCheck: Autocompletion.literal(e, ["567nm"]))
+    parser.defineType("led", "625nm", evaluator=None, autocompleter=lambda e, justCheck: Autocompletion.literal(e, ["625nm"]))
 
     parser.defineType("led-power", "{<led-power>:int}%", evaluator=None, autocompleter=True)
     parser.defineType("led-setting", "{led-power:led-power} at {wavelength:led}", None, True)
@@ -208,7 +208,7 @@ def test10():
 
     parser.defineType("units", "{unitstring:[a-zA-Z()]:+}",
           evaluator=lambda pn: pn.getParsedString() != "pixel(s)",
-          autocompleter=Autocompleter(getAutocompletion))
+          autocompleter=getAutocompletion)
 
     parser.defineSentence("Blur with a kernel of radius 5 {units:units}.",
                           evaluator=None)
@@ -251,7 +251,7 @@ def makeGrammar() -> BNF:
                     literal("two").withName("two"),
                     literal("three").withName("three"),
                     literal("four").withName("four")]
-                ).setAutocompleter(Autocompleter(getAutocompletion))
+                ).setAutocompleter(getAutocompletion)
                 .withName("or")
             ).withName("star"),
             literal("five").withName("five")]

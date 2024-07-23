@@ -112,12 +112,12 @@ class EBNF(EBNFCore):
 
     def makeWhitespaceStar(self) -> Rule:
         ret = self.star(EBNF.WHITESPACE_STAR_NAME, terminal.WHITESPACE.withName())
-        ret.setAutocompleter(Autocompleter(lambda pn, justCheck: Autocompletion.literal(pn, [" "] if len(pn.getParsedString()) == 0 else [""])))
+        ret.setAutocompleter(lambda pn, justCheck: Autocompletion.literal(pn, [" "] if len(pn.getParsedString()) == 0 else [""]))
         return ret
 
     def makeWhitespacePlus(self) -> Rule:
         ret = self.plus(EBNF.WHITESPACE_PLUS_NAME, terminal.WHITESPACE.withName())
-        ret.setAutocompleter(Autocompleter(lambda pn, justCheck: Autocompletion.literal(pn, [" "] if len(pn.getParsedString()) == 0 else [""])))
+        ret.setAutocompleter(lambda pn, justCheck: Autocompletion.literal(pn, [" "] if len(pn.getParsedString()) == 0 else [""]))
         return ret
 
     def makeIntegerRange(self) -> Rule:
