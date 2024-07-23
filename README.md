@@ -99,8 +99,8 @@ Apply Gaussian blurring with a standard deviation of 1 pixel(s).
 
 ## More information
 
-* [A step-by-step tutorial](https://nlscript.github.io/nlScript-tutorial-python)
-* [Explanations for it](https://nlScript.github.io/nlScript-java)
+* [A step-by-step tutorial](https://nlscript.github.io/nlScript-java)
+* [The tutorial source code](https://github.com/nlScript/nlScript-tutorial-python)
 * [Details how to define variables](https://nlscript.github.io/nlScript-java/variables.html)
 * [Built-in types apart from `float`](https://nlscript.github.io/nlScript-java/#built-in-types)
 * [More detail about custom types](https://nlscript.github.io/nlScript-java/custom-types.html)
