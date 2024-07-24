@@ -16,9 +16,13 @@ class Interpolator:
         self._vFrom = self._getter()
 
     def interpolate(self, cycle: int) -> None:
+        if cycle == self._nCycles - 1:
+            self._setter(cycle, self._vTo)
+            return
+
         if cycle == 0:
             self._initialize()
-        interpolated: float = self._vFrom + (cycle + 1) * (self._vTo - self._vFrom) / self._nCycles
+        interpolated: float = self._vFrom + cycle * (self._vTo - self._vFrom) / (self._nCycles - 1)
         self._setter(cycle, interpolated)
 
 
