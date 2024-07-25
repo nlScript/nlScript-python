@@ -7,7 +7,7 @@ from typing import cast, List, Callable
 
 from PySide2 import QtCore, QtGui
 from PySide2.QtCore import Qt, QStringListModel, QRect, QObject, QEvent, QModelIndex, Signal, Slot, \
-    QThreadPool, QRunnable
+    QThreadPool
 from PySide2.QtGui import QTextCursor, QKeyEvent, QColor, QPalette, QFont
 from PySide2.QtWidgets import QCompleter, QPlainTextEdit, QApplication, QTextEdit, QItemDelegate, QStyleOptionViewItem, \
     QWidget, QSplitter, QPushButton, QVBoxLayout
@@ -152,19 +152,12 @@ class ACEditor(QWidget):
         ))
         self.threadpool.start(worker)
 
-    def printMsg(self, text):
-        sys.stdout.write(text + '\n')
-        sys.stdout.flush()
-
     def run_fn(self, parser: Parser, textToEvaluate: str) -> None:
         self._beforeRun()
-        self.printMsg("Parsing...")
         pn: ParsedNode = parser.parse(textToEvaluate)
-        self.printMsg(graphviz.toVizDotLink(pn))
-        self.printMsg("Evaluating...")
+        self._outputArea.setPlainText(graphviz.toVizDotLink(pn))
         pn.evaluate()
         self._afterRun()
-        self.printMsg("Done")
 
 
 class ErrorHighlight:
@@ -371,10 +364,6 @@ class AutocompletionContext(CodeEditor):
                 if not atLeastOneCompletionForCurrentParameter:
                     self.parameterizedCompletion.next()
                     return
-            else:
-                print("no completions")
-        else:
-            print("parameterized completion = None")
 
         if len(autocompletions) == 1:
             if autoinsertSingleOption or isinstance(autocompletions[0], Literal):
@@ -456,10 +445,6 @@ class ParameterizedCompletionContext(QObject):
     def parameters(self) -> List[Param]:
         return self._parameters
 
-    def printHighlights(self):
-        for p in self._parameters:
-            print(str(p))
-
     def addHighlight(self, name: str, autocompletion: Autocompletion or None, i0: int, i1: int) -> Param:
         selection = QTextEdit.ExtraSelection()
 
@@ -511,7 +496,6 @@ class ParameterizedCompletionContext(QObject):
 
     def getCurrentParameter(self) -> Param:
         idx = self.getParamIndexForCursorPosition(self._tc.textCursor().position())
-        print("Current paramter index is " + str(idx))
         return self.parameters[idx] if idx >= 0 else None
 
     def next(self) -> None:
@@ -605,7 +589,7 @@ class ParameterizedCompletionContext(QObject):
                         s = ParameterizedCompletionContext.parseParameters(entire, ret, offs)
                         insertionString += s
                     else:
-                        print("Unknown/unexpected autocompletion")
+                        print(sys.stderr, "Unknown/unexpected autocompletion")
             return insertionString
 
         raise Exception("Unexpected completion type: " + str(type(autocompletion)))

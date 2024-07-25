@@ -36,7 +36,7 @@ class CodeEditor(QPlainTextEdit):
             try:
                 self.myExtraSelections.remove(s)
             except ValueError:
-                print("no existing ExtraSelection " + str(s))
+                pass  # print("no existing ExtraSelection " + str(s))
 
     def addExtrasSelection(self, s: QTextEdit.ExtraSelection) -> None:
         self.myExtraSelections.append(s)
@@ -103,7 +103,6 @@ class CodeEditor(QPlainTextEdit):
         self.currentLineSelection = selection
 
         self.prependExtraSelection(selection)
-        print("selections", len(self.myExtraSelections))
         self.updateExtraSelections()
 
     def updateLineNumberArea(self, rect: QRect, dy: int) -> None:
