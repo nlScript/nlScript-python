@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import List
+from typing import List, Callable
 
 
 class LED(Enum):
@@ -174,6 +174,22 @@ class Microscope:
         self._magnificationChanger = MagnificationChanger.ONE_ZERO
         self._binning = Binning.ONE
         self._incubation = Incubation()
+        self._onAcquire: Callable[[Position, Channel], None] or None = None
+
+    @property
+    def lens(self):
+        return self._lens
+
+    @property
+    def magnificationChanger(self):
+        return self._magnificationChanger
+
+    @property
+    def binning(self):
+        return self._binning
+
+    def setOnAcquire(self, onAcquire: Callable[[Position, Channel], None]):
+        self._onAcquire = onAcquire
 
     def reset(self):
         self._channels.clear()
@@ -253,30 +269,4 @@ class Microscope:
                 self.acquireSinglePositionAndChannel(position, channel)
 
     def acquireSinglePositionAndChannel(self, position: Position, channel: Channel):
-        current_date = datetime.now()
-        timeStamp = current_date.strftime('%b %d, %Y, %H:%M:%S')
-
-        print(timeStamp)
-        print("======================")
-        print("Stage position: " + position.name)
-        print("  - " + str(position.center))
-        print()
-        print("Channel settings: " + channel.name)
-        print("  - Exposure time: " + str(channel.getExposureTime()) + "ms")
-        for led in LED:
-            ledSetting: LEDSetting = channel.getLEDSetting(led)
-            if ledSetting is not None:
-                print("  - LED " + str(led.WAVELENGTH) + ": " + str(ledSetting.getIntensity()) + "%")
-        print()
-        print("Optics:")
-        print("  - Lens: " + str(self._lens))
-        print("  - Mag.Changer: " + str(self._magnificationChanger))
-        print("  - Binning: " + str(self._binning))
-        print()
-        print("Incubation:")
-        print("  - Temperature: " + str(self.getTemperature()) + "C")
-        print("  - CO2 concentration: " + str(self.getCO2Concentration()) + "%")
-        print()
-        print("Acquire stack")
-        print()
-        print()
+        self._onAcquire(position, channel)

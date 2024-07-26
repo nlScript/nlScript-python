@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime, timedelta, date, time
 from typing import List
 
-from nlScript.autocompleter import Autocompleter
 from nlScript.core.autocompletion import Autocompletion
 from nlScript.ebnf.ebnfparser import ParseStartListener
 from nlScript.ebnf.parselistener import ParseListener
@@ -20,6 +19,10 @@ class LanguageControl:
         self._microscope = microscope if microscope is not None else Microscope()
         self._timeline = Timeline()
         self._globalStart: time = datetime.now().time()
+
+    @property
+    def microscope(self):
+        return self._microscope
 
     def reset(self):
         self._globalStart: time = datetime.now().time()

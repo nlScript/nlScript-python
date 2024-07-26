@@ -123,6 +123,9 @@ class ACEditor(QWidget):
     def getText(self) -> str:
         return self._textEdit.document().toPlainText()
 
+    def getOutputArea(self):
+        return self._outputArea
+
     def getSelectedLinesStart(self) -> str:
         tc: QTextCursor = self._textEdit.textCursor()
         start: int = tc.selectionStart()
@@ -155,7 +158,6 @@ class ACEditor(QWidget):
     def run_fn(self, parser: Parser, textToEvaluate: str) -> None:
         self._beforeRun()
         pn: ParsedNode = parser.parse(textToEvaluate)
-        self._outputArea.setPlainText(graphviz.toVizDotLink(pn))
         pn.evaluate()
         self._afterRun()
 
