@@ -157,6 +157,11 @@ class EBNF(EBNFCore):
         gray        = self.sequence(None, [literal("gray"        ).withName()]).setEvaluator(lambda pn: EBNF.rgb2int(128, 128, 128))
 
         custom = self.tuple(None, self.INTEGER.withName(), ["red", "green", "blue"])
+        custom.setEvaluator(lambda pn: EBNF.rgb2int(
+            pn.evaluate("red"),
+            pn.evaluate("green"),
+            pn.evaluate("blue")
+        ))
 
         return self.orrule(self.COLOR_NAME, [
                 custom.withName(),
