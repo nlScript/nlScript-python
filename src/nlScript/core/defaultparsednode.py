@@ -53,7 +53,7 @@ class DefaultParsedNode:
             return None
 
         if isinstance(symbol, Literal):
-            return Autocompletion.literal(pn=self, literals=[symbol.symbol])
+            return Autocompletion.literal(pn=self, literals=[symbol.getLiteral()])
 
         name: str = self.name
         if name == Named.UNNAMED:

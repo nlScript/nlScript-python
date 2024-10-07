@@ -88,13 +88,17 @@ class Digit(Terminal):
 
 
 class Literal(Terminal):
-    def __init__(self, symbol: str):
-        super().__init__(symbol)
+    def __init__(self, literal: str):
+        super().__init__("literal:" + literal)
+        self._literal = literal
+
+    def getLiteral(self) -> str:
+        return self._literal
 
     # override abstract method
     def matches(self, lexer: Lexer) -> Matcher:
         pos = lexer.pos
-        symbol = self.symbol
+        symbol = self._literal
         for i in range(len(symbol)):
             if lexer.isAtEnd(i):
                 return Matcher(ParsingState.END_OF_INPUT, pos, lexer.substring(pos, pos + i + 1))

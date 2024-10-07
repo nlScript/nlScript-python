@@ -249,12 +249,14 @@ def testVariable():
 
     test = "{blubb , alkjad asd 4. <>l}"
     evaluatedTerminal = cast(Named[Terminal], evaluateHighlevelParser(hlp, test))
-    assertEquals("blubb , alkjad asd 4. <>l", evaluatedTerminal.getSymbol().symbol)
+    literal: Literal = cast(Literal, evaluatedTerminal.get())
+    assertEquals("blubb , alkjad asd 4. <>l", literal.getLiteral())
     assertEquals("blubb , alkjad asd 4. <>l", evaluatedTerminal.name)
 
     test = "{heinz}"
     evaluatedTerminal = cast(Named[Terminal], evaluateHighlevelParser(hlp, test))
-    assertEquals("heinz", evaluatedTerminal.getSymbol().symbol)
+    literal: Literal = cast(Literal, evaluatedTerminal.get())
+    assertEquals("heinz", literal.getLiteral())
     assertEquals("heinz", evaluatedTerminal.name)
 
     test = "{heinz:+}"
@@ -263,7 +265,8 @@ def testVariable():
     rule = hlp.targetGrammar.getRules(evaluatedNonTerminal.get())[0]
     assertEquals(Plus, type(rule))
     plus = cast(Plus, rule)
-    assertEquals("heinz", plus.getEntry().symbol)
+    literal: Literal = cast(Literal, plus.getEntry())
+    assertEquals("heinz", literal.getLiteral())
 
     test = "{heinz:3-5}"
     evaluatedNonTerminal = cast(Named[NonTerminal], evaluateHighlevelParser(hlp, test))
@@ -273,16 +276,19 @@ def testVariable():
     repeat = cast(Repeat, rule)
     assertEquals(3, repeat.rfrom)
     assertEquals(5, repeat.rto)
-    assertEquals("heinz", repeat.getEntry().symbol)
+    literal: Literal = cast(Literal, repeat.getEntry())
+    assertEquals("heinz", literal.getLiteral())
 
     test = "{, }"
     evaluatedTerminal = cast(Named[Terminal], evaluateHighlevelParser(hlp, test))
-    assertEquals(", ", evaluatedTerminal.getSymbol().symbol)
+    literal: Literal = cast(Literal, evaluatedTerminal.get())
+    assertEquals(", ", literal.getLiteral())
     assertEquals(", ", evaluatedTerminal.name)
 
     test = "{,\n }"
     evaluatedTerminal = cast(Named[Terminal], evaluateHighlevelParser(hlp, test))
-    assertEquals(",\n ", evaluatedTerminal.getSymbol().symbol)
+    literal: Literal = cast(Literal, evaluatedTerminal.get())
+    assertEquals(",\n ", literal.getLiteral())
     assertEquals(",\n ", evaluatedTerminal.name)
 
 
@@ -295,19 +301,22 @@ def testNoVariable():
     test = "lk345}.-"
     evaluatedTerminal = cast(Named[Terminal], evaluateHighlevelParser(hlp, test))
     assertEquals(Literal, type(evaluatedTerminal.get()))
-    assertEquals(test, evaluatedTerminal.getSymbol().symbol)
+    literal: Literal = cast(Literal, evaluatedTerminal.get())
+    assertEquals(test, literal.getLiteral())
     assertEquals(test, evaluatedTerminal.name)
 
     test = "--1'x}"
     evaluatedTerminal = cast(Named[Terminal], evaluateHighlevelParser(hlp, test))
     assertEquals(Literal, type(evaluatedTerminal.get()))
-    assertEquals(test, evaluatedTerminal.getSymbol().symbol)
+    literal: Literal = cast(Literal, evaluatedTerminal.get())
+    assertEquals(test, literal.getLiteral())
     assertEquals(test, evaluatedTerminal.name)
 
     test = "."
     evaluatedTerminal = cast(Named[Terminal], evaluateHighlevelParser(hlp, test))
     assertEquals(Literal, type(evaluatedTerminal.get()))
-    assertEquals(test, evaluatedTerminal.getSymbol().symbol)
+    literal: Literal = cast(Literal, evaluatedTerminal.get())
+    assertEquals(test, literal.getLiteral())
     assertEquals(test, evaluatedTerminal.name)
 
     testToFail = "lj{l"
