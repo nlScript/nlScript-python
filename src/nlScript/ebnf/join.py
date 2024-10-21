@@ -99,6 +99,7 @@ class Join(Rule):
             star = Star(None, next)
             star.setParsedChildNames(["next"])
             star.createBNF(grammar)
+            self.productions.extend(star.productions)
             p = self.addProduction(grammar, self, repetition, [first, star.tgt])
 
             def onExtension(parent: DefaultParsedNode, children: List[DefaultParsedNode]):
@@ -113,6 +114,7 @@ class Join(Rule):
             star = Star(None, next)
             star.setParsedChildNames(["next"])
             star.createBNF(grammar)
+            self.productions.extend(star.productions)
 
             p1 = self.addProduction(grammar, self, repetition, [first, star.tgt])
             p2 = self.addProduction(grammar, self, repetition, [EPSILON])
@@ -157,6 +159,7 @@ class Join(Rule):
                     repeat = Repeat(None, next, 0, upper - 1)
                     repeat.setParsedChildNames(["next"])
                     repeat.createBNF(grammar)
+                    self.productions.extend(repeat.productions)
                     p = self.addProduction(grammar, self, repetition, [first, repeat.tgt])
                     p.astBuilder = astBuilder
 
@@ -172,6 +175,7 @@ class Join(Rule):
                     repeat = Repeat(None, next, lower - 1, upper - 1)
                     repeat.setParsedChildNames(["next"])
                     repeat.createBNF(grammar)
+                    self.productions.extend(repeat.productions)
                     p = self.addProduction(grammar, self, repetition, [first, repeat.tgt])
                     p.astBuilder = astBuilder
 

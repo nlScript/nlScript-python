@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Set
 
 import logging
 
@@ -36,6 +36,9 @@ class BNF:
             if self._productions[i].left == BNF.ARTIFICIAL_START_SYMBOL:
                 del(self._productions[i])
                 break
+
+    def removeProductions(self, productions: Set[Production]) -> None:
+        self._productions[:] = [p for p in self._productions if p not in productions]
 
     def addProduction(self, p: Production) -> Production:
         try:

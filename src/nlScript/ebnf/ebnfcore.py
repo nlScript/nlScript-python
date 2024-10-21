@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from nlScript.autocompleter import Autocompleter
 from nlScript.core.autocompletion import Autocompletion, EntireSequence
 from nlScript.core.terminal import WHITESPACE, literal
 from nlScript.ebnf.join import Join
 from nlScript.ebnf.optional import Optional
 from nlScript.ebnf.orrule import Or
-from typing import TYPE_CHECKING, List, cast, Dict
+from typing import TYPE_CHECKING, List, cast, Dict, Set
 
 from nlScript.core.bnf import BNF
 from nlScript.ebnf.plus import Plus
@@ -22,6 +21,7 @@ if TYPE_CHECKING:
     from nlScript.ebnf.rule import Rule
     from nlScript.core.named import Named
     from nlScript.parsednode import ParsedNode
+    from nlScript.core.production import Production
 
 
 class EBNFCore:
@@ -29,7 +29,6 @@ class EBNFCore:
         self._symbols: {str, Symbol} = {} if other is None else other.symbols.copy()
         self._rules   = [] if other is None else other.rules.copy()
         self._bnf = BNF()
-        self._compiled = False if other is None else other._compiled
 
     def copy(self):
         return EBNFCore(other=self)
@@ -40,17 +39,11 @@ class EBNFCore:
         return None
 
     def compile(self, topLevelSymbol: Symbol) -> None:
-        self._compiled = False  # otherwise removeRules() and addRule() will complain
         # update the start symbol
         self.removeRules(BNF.ARTIFICIAL_START_SYMBOL)
         sequence = Sequence(BNF.ARTIFICIAL_START_SYMBOL, [topLevelSymbol, BNF.ARTIFICIAL_STOP_SYMBOL])
         self.addRule(sequence)
         sequence.setEvaluator(FIRST_CHILD_EVALUATOR)
-
-        self._bnf.reset()
-        for r in self.rules:
-            r.createBNF(self._bnf)
-        self._compiled = True
 
     def getBNF(self):
         return self._bnf
@@ -218,13 +211,15 @@ class EBNFCore:
             if not s.isEpsilon() and s.symbol not in self._symbols:
                 self._symbols[s.symbol] = s
         self._rules.append(rule)
-        self._compiled = False
+        rule.createBNF(self._bnf)
 
     def removeRules(self, symbol: NonTerminal):
+        toRemove: Set[Production] = set([])
         for i in range(len(self._rules) - 1, -1, -1):
             if self._rules[i].tgt == symbol:
-                del(self._rules[i])
-        self._compiled = True
+                toRemove.update(self._rules[i].productions)
+                del (self._rules[i])
+        self._bnf.removeProductions(toRemove)
 
     def newOrExistingNonTerminal(self, typ: str) -> NonTerminal or None:
         if typ is None:

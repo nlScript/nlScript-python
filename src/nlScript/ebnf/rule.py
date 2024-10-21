@@ -27,6 +27,7 @@ class Rule(RepresentsSymbol):
         self._evaluator = None
         self._autocompleter = None
         self._onSuccessfulParsed = None
+        self._productions: List[EBNFProduction] = []
 
     def withName(self, name: str or None = None) -> NamedRule:
         return NamedRule(self, name)
@@ -34,6 +35,10 @@ class Rule(RepresentsSymbol):
     @property
     def tgt(self) -> NonTerminal:
         return self._tgt
+
+    @property
+    def productions(self):
+        return self._productions
 
     # implement abstract method
     def getRepresentedSymbol(self) -> Symbol:
@@ -72,6 +77,7 @@ class Rule(RepresentsSymbol):
     @staticmethod
     def addProduction(grammar: BNF, rule: Rule, left: NonTerminal, right: List[Symbol]) -> EBNFProduction:
         production = EBNFProduction(rule, left, right)
+        rule.productions.append(production)
         grammar.addProduction(production)
         return production
 
