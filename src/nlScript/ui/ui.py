@@ -249,7 +249,6 @@ class AutocompletionContext(CodeEditor):
         # but don't automatically insert
         self.autocomplete(False)
 
-        autocompletion: Autocompletion = self.parameterizedCompletion.getCurrentParameter().parameterizedCompletion
         completions: List[Autocompletion] = self.parameterizedCompletion.getParameter(pIdx).allOptions
 
         self.completer.setCompletions(completions)
